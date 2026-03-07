@@ -1,5 +1,4 @@
 import type { Folder } from "../types";
-import { Pencil, Trash2 } from "lucide-react";
 
 type Props = {
   folders: Folder[];
@@ -19,8 +18,8 @@ export function FolderSidebar({
   onDeleteFolder,
 }: Props) {
   return (
-    <aside className="sidebar card">
-      <div className="section-header">
+    <aside className="sidebar card mobile-section-card">
+      <div className="section-header compact-section-header">
         <div>
           <h2>Pastas</h2>
           <p className="muted">Organize seus materiais.</p>
@@ -32,11 +31,11 @@ export function FolderSidebar({
       ) : folders.length === 0 ? (
         <p className="muted">Nenhuma pasta criada.</p>
       ) : (
-        <div className="folder-list">
+        <div className="folder-list mobile-folder-list">
           {folders.map((folder) => (
             <div
               key={folder.id}
-              className={`folder-item ${
+              className={`folder-item mobile-folder-item ${
                 selectedFolderId === folder.id ? "active-folder" : ""
               }`}
             >
@@ -44,22 +43,25 @@ export function FolderSidebar({
                 className="folder-name-button"
                 onClick={() => onSelectFolder(folder.id)}
               >
-                {folder.name}
+                <span className="folder-emoji">📁</span>
+                <span className="folder-name-text">{folder.name}</span>
               </button>
 
               <div className="folder-actions">
                 <button
                   className="icon-button"
                   onClick={() => onEditFolder(folder)}
+                  aria-label={`Renomear pasta ${folder.name}`}
                 >
-                  <Pencil size={16} />
+                  ✏️
                 </button>
 
                 <button
                   className="icon-button danger"
                   onClick={() => onDeleteFolder(folder)}
+                  aria-label={`Excluir pasta ${folder.name}`}
                 >
-                  <Trash2 size={16} />
+                  🗑
                 </button>
               </div>
             </div>

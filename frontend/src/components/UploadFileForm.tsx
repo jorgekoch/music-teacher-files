@@ -27,7 +27,7 @@ export function UploadFileForm({ disabled, onUpload }: Props) {
   }
 
   return (
-    <form className="upload-form" onSubmit={handleSubmit}>
+    <form className="upload-form responsive-upload-form compact-mobile-form" onSubmit={handleSubmit}>
       <input
         id="file-input"
         className="input"
@@ -37,11 +37,11 @@ export function UploadFileForm({ disabled, onUpload }: Props) {
       />
 
       <button
-        className="primary-button"
+        className="primary-button upload-button"
         type="submit"
         disabled={disabled || !selectedFile || loading}
       >
-        {loading ? "Enviando..." : "Enviar arquivo"}
+        {loading ? "Enviando..." : "Enviar"}
       </button>
     </form>
   );

@@ -23,17 +23,17 @@ export function CreateFolderForm({ onCreate }: Props) {
   }
 
   return (
-    <form className="inline-form" onSubmit={handleSubmit}>
+    <form className="inline-form responsive-inline-form compact-mobile-form" onSubmit={handleSubmit}>
       <input
         className="input"
         type="text"
-        placeholder="Nome da nova pasta"
+        placeholder="Nova pasta"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
 
-      <button className="primary-button" type="submit" disabled={loading}>
-        {loading ? "Criando..." : "Criar pasta"}
+      <button className="primary-button create-folder-button" type="submit" disabled={loading}>
+        {loading ? "Criando..." : "Criar"}
       </button>
     </form>
   );
