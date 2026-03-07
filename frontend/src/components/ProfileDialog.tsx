@@ -35,6 +35,22 @@ export function ProfileDialog({
     }
   }, [profile]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [open, onClose]);
+
   if (!open || !profile) return null;
 
   async function handleProfileSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -74,9 +90,20 @@ export function ProfileDialog({
     }
   }
 
+  function handleOverlayClick() {
+    onClose();
+  }
+
+  function handleDialogClick(e: React.MouseEvent<HTMLDivElement>) {
+    e.stopPropagation();
+  }
+
   return (
-    <div className="dialog-overlay">
-      <div className="dialog-card profile-dialog-card">
+    <div className="dialog-overlay" onClick={handleOverlayClick}>
+      <div
+        className="dialog-card profile-dialog-card scrollable-dialog"
+        onClick={handleDialogClick}
+      >
         <h3>Perfil</h3>
         <p className="muted">Gerencie suas informações pessoais.</p>
 
