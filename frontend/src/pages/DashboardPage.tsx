@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { api } from "../services/api";
 import type { FileItem, Folder, Profile } from "../types";
 import { Layout } from "../components/Layout";
 import { CreateFolderForm } from "../components/CreateFolderForm";
 import { FolderSidebar } from "../components/FolderSidebar";
 import { FilePanel } from "../components/FilePanel";
-import { FeedbackMessage } from "../components/FeedbackMessage";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { EditFolderDialog } from "../components/EditFolderDialog";
 import { ProfileDialog } from "../components/ProfileDialog";
@@ -24,8 +24,6 @@ export function DashboardPage() {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loadingFolders, setLoadingFolders] = useState(false);
   const [loadingFiles, setLoadingFiles] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
   const [folderToEdit, setFolderToEdit] = useState<Folder | null>(null);
@@ -35,11 +33,6 @@ export function DashboardPage() {
     () => folders.find((folder) => folder.id === selectedFolderId) || null,
     [folders, selectedFolderId]
   );
-
-  function clearMessages() {
-    setError("");
-    setSuccess("");
-  }
 
   function saveSelectedFolderId(folderId: number | null) {
     if (folderId === null) {
@@ -67,7 +60,7 @@ export function DashboardPage() {
       const response = await api.get<Profile>("/profile");
       setProfile(response.data);
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Erro ao carregar perfil");
+      toast.error(err?.response?.data?.error || "Erro ao carregar perfil");
     }
   }
 
@@ -110,7 +103,7 @@ export function DashboardPage() {
       setSelectedFolderId(folderList[0].id);
       saveSelectedFolderId(folderList[0].id);
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Erro ao carregar pastas");
+      toast.error(err?.response?.data?.error || "Erro ao carregar pastas");
     } finally {
       setLoadingFolders(false);
     }
@@ -122,7 +115,7 @@ export function DashboardPage() {
       const response = await api.get<FileItem[]>(`/files/folder/${folderId}`);
       setFiles(response.data);
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Erro ao carregar arquivos");
+      toast.error(err?.response?.data?.error || "Erro ao carregar arquivos");
     } finally {
       setLoadingFiles(false);
     }
@@ -131,7 +124,6 @@ export function DashboardPage() {
   function handleSelectFolder(folderId: number) {
     setSelectedFolderId(folderId);
     saveSelectedFolderId(folderId);
-    clearMessages();
   }
 
   useEffect(() => {
@@ -152,35 +144,30 @@ export function DashboardPage() {
   }, [selectedFolderId]);
 
   async function handleCreateFolder(name: string) {
-    clearMessages();
-
     try {
       const response = await api.post<Folder>("/folders", { name });
       const createdFolder = response.data;
 
-      setSuccess("Pasta criada com sucesso.");
-
+      toast.success("Pasta criada com sucesso.");
       await fetchFolders();
 
       setSelectedFolderId(createdFolder.id);
       saveSelectedFolderId(createdFolder.id);
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Erro ao criar pasta");
+      toast.error(err?.response?.data?.error || "Erro ao criar pasta");
     }
   }
 
   async function handleUpdateFolder(name: string) {
     if (!folderToEdit) return;
 
-    clearMessages();
-
     try {
       await api.patch(`/folders/${folderToEdit.id}`, { name });
-      setSuccess("Pasta renomeada com sucesso.");
+      toast.success("Pasta renomeada com sucesso.");
       setFolderToEdit(null);
       await fetchFolders();
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Erro ao renomear pasta");
+      toast.error(err?.response?.data?.error || "Erro ao renomear pasta");
       setFolderToEdit(null);
     }
   }
@@ -188,13 +175,11 @@ export function DashboardPage() {
   async function confirmDeleteFolder() {
     if (!folderToDelete) return;
 
-    clearMessages();
-
     try {
       const deletedFolderId = folderToDelete.id;
 
       await api.delete(`/folders/${deletedFolderId}`);
-      setSuccess("Pasta excluída com sucesso.");
+      toast.success("Pasta excluída com sucesso.");
       setFolderToDelete(null);
 
       if (selectedFolderId === deletedFolderId) {
@@ -205,7 +190,7 @@ export function DashboardPage() {
 
       await fetchFolders();
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Erro ao excluir pasta");
+      toast.error(err?.response?.data?.error || "Erro ao excluir pasta");
       setFolderToDelete(null);
     }
   }
@@ -213,73 +198,63 @@ export function DashboardPage() {
   async function handleUpload(file: File) {
     if (!selectedFolderId) return;
 
-    clearMessages();
-
     const formData = new FormData();
     formData.append("file", file);
     formData.append("folderId", String(selectedFolderId));
 
     try {
       await api.post("/files/upload", formData);
-      setSuccess("Arquivo enviado com sucesso.");
+      toast.success("Arquivo enviado com sucesso.");
       await fetchFiles(selectedFolderId);
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Erro ao enviar arquivo");
+      toast.error(err?.response?.data?.error || "Erro ao enviar arquivo");
     }
   }
 
   async function confirmDeleteFile() {
     if (!fileToDelete || !selectedFolderId) return;
 
-    clearMessages();
-
     try {
       await api.delete(`/files/${fileToDelete.id}`);
-      setSuccess("Arquivo excluído com sucesso.");
+      toast.success("Arquivo excluído com sucesso.");
       setFileToDelete(null);
       await fetchFiles(selectedFolderId);
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Erro ao excluir arquivo");
+      toast.error(err?.response?.data?.error || "Erro ao excluir arquivo");
       setFileToDelete(null);
     }
   }
 
   async function handleUpdateProfile(name: string) {
-    clearMessages();
-
     try {
       const response = await api.patch<Profile>("/profile", { name });
       setProfile(response.data);
-      setSuccess("Perfil atualizado com sucesso.");
+      toast.success("Perfil atualizado com sucesso.");
       setProfileOpen(false);
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Erro ao atualizar perfil");
+      toast.error(err?.response?.data?.error || "Erro ao atualizar perfil");
     }
   }
 
   async function handleUpdatePassword(currentPassword: string, newPassword: string) {
-    clearMessages();
-
     try {
       await api.patch("/profile/password", { currentPassword, newPassword });
-      setSuccess("Senha atualizada com sucesso.");
+      toast.success("Senha atualizada com sucesso.");
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Erro ao atualizar senha");
+      toast.error(err?.response?.data?.error || "Erro ao atualizar senha");
     }
   }
 
   async function handleUpdateAvatar(file: File) {
-    clearMessages();
-
     const formData = new FormData();
     formData.append("file", file);
 
     try {
       const response = await api.patch<Profile>("/profile/avatar", formData);
       setProfile(response.data);
-      setSuccess("Foto de perfil atualizada com sucesso.");
+      toast.success("Foto de perfil atualizada com sucesso.");
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Erro ao atualizar foto");
+      toast.error(err?.response?.data?.error || "Erro ao atualizar foto");
     }
   }
 
@@ -291,11 +266,6 @@ export function DashboardPage() {
     >
       <div className="dashboard-header card">
         <CreateFolderForm onCreate={handleCreateFolder} />
-
-        <div className="feedback-stack">
-          {success && <FeedbackMessage type="success" message={success} />}
-          {error && <FeedbackMessage type="error" message={error} />}
-        </div>
       </div>
 
       <div className="dashboard-grid">

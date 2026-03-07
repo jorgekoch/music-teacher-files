@@ -1,4 +1,6 @@
 import type { Folder } from "../types";
+import { LoadingSkeleton } from "./LoadingSkeleton";
+import { EmptyState } from "./EmptyState";
 
 type Props = {
   folders: Folder[];
@@ -27,9 +29,13 @@ export function FolderSidebar({
       </div>
 
       {loading ? (
-        <p className="muted">Carregando pastas...</p>
+        <LoadingSkeleton lines={5} height={54} />
       ) : folders.length === 0 ? (
-        <p className="muted">Nenhuma pasta criada.</p>
+        <EmptyState
+          emoji="📁"
+          title="Nenhuma pasta criada"
+          description="Crie sua primeira pasta para começar a organizar seus arquivos."
+        />
       ) : (
         <div className="folder-list mobile-folder-list">
           {folders.map((folder) => (
@@ -61,7 +67,7 @@ export function FolderSidebar({
                   onClick={() => onDeleteFolder(folder)}
                   aria-label={`Excluir pasta ${folder.name}`}
                 >
-                  🗑
+                  🗑️
                 </button>
               </div>
             </div>

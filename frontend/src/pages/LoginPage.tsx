@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
-import { FeedbackMessage } from "../components/FeedbackMessage";
 
 export function LoginPage() {
   const { login, isAuthenticated, isAuthLoading } = useAuth();
@@ -26,9 +26,12 @@ export function LoginPage() {
     try {
       setLoading(true);
       await login(form);
+      toast.success("Login realizado com sucesso.");
       navigate("/dashboard");
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Erro ao fazer login");
+      const message = err?.response?.data?.error || "Erro ao fazer login";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -62,7 +65,7 @@ export function LoginPage() {
             }
           />
 
-          {error && <FeedbackMessage type="error" message={error} />}
+          {error && <p className="feedback-inline-error">{error}</p>}
 
           <button className="primary-button full-width" disabled={loading}>
             {loading ? "Entrando..." : "Entrar"}
