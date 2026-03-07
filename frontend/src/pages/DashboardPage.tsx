@@ -19,14 +19,16 @@ export function DashboardPage() {
 
   async function fetchFolders() {
     try {
-      const response = await api.get("/folders/list");
-      setFolders(response.data);
+      const response = await api.get<Folder[]>("/folders/list");
+      const folderList = response.data;
 
-      if (response.data.length > 0 && !selectedFolderId) {
-        setSelectedFolderId(response.data[0].id);
+      setFolders(folderList);
+
+      if (folderList.length > 0 && !selectedFolderId) {
+        setSelectedFolderId(folderList[0].id);
       }
 
-      if (response.data.length === 0) {
+      if (folderList.length === 0) {
         setSelectedFolderId(null);
         setFiles([]);
       }
@@ -37,7 +39,7 @@ export function DashboardPage() {
 
   async function fetchFiles(folderId: number) {
     try {
-      const response = await api.get(`/files/folder/${folderId}`);
+      const response = await api.get<FileItem[]>(`/files/folder/${folderId}`);
       setFiles(response.data);
     } catch (err: any) {
       setError(err?.response?.data?.error || "Erro ao carregar arquivos");

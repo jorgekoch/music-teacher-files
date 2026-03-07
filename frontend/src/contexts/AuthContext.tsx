@@ -2,6 +2,10 @@ import { createContext, useEffect, useMemo, useState } from "react";
 import { api } from "../services/api";
 import type { LoginData } from "../types";
 
+type LoginResponse = {
+  token: string;
+};
+
 type AuthContextType = {
   token: string | null;
   isAuthenticated: boolean;
@@ -24,8 +28,8 @@ export function AuthProvider({ children }: Props) {
   }, []);
 
   async function login(data: LoginData) {
-    const response = await api.post("/auth/login", data);
-    const receivedToken = response.data.token as string;
+    const response = await api.post<LoginResponse>("/auth/login", data);
+    const receivedToken = response.data.token;
 
     localStorage.setItem("token", receivedToken);
     setToken(receivedToken);
