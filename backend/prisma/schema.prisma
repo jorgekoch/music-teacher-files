@@ -13,9 +13,10 @@ model User {
   password  String
   name      String   @default("Usuário")
   avatarUrl String?
+  plan      String   @default("FREE")
   createdAt DateTime @default(now())
 
-  folders Folder[]
+  folders   Folder[]
 }
 
 model Folder {
