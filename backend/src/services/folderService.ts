@@ -1,6 +1,6 @@
 import * as folderRepository from "../repositories/folderRepository";
 import { AppError } from "../errors/AppError";
-import { deleteFromCloudinary } from "./cloudinaryService";
+import { deletePrivateFile } from "./r2Service";
 
 export function createFolderService(name: string, userId: number) {
   return folderRepository.createFolder(name, userId);
@@ -42,9 +42,7 @@ export async function deleteFolderService(folderId: number, userId: number) {
   const folder = await getOwnedFolderOrFail(folderId, userId);
 
   for (const file of folder.files) {
-    if (file.publicId) {
-      await deleteFromCloudinary(file.publicId);
-    }
+    await deletePrivateFile(file.storageKey);
   }
 
   await folderRepository.deleteFilesByFolderId(folderId);

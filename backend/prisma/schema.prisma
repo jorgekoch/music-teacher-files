@@ -32,13 +32,13 @@ model Folder {
 }
 
 model File {
-  id        Int      @id @default(autoincrement())
-  name      String
-  url       String
-  publicId  String?
-  size      Int?
-  folderId  Int
-  createdAt DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  name       String
+  url        String?
+  storageKey String
+  size       Int?
+  folderId   Int
+  createdAt  DateTime @default(now())
 
   folder Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
 }

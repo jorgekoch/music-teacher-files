@@ -2,8 +2,8 @@ import prisma from "../database/prisma";
 
 type CreateFileData = {
   name: string;
-  url: string;
-  publicId?: string | null;
+  url?: string | null;
+  storageKey: string;
   size?: number | null;
   folderId: number;
 };
@@ -12,8 +12,8 @@ export function createFile(data: CreateFileData) {
   return prisma.file.create({
     data: {
       name: data.name,
-      url: data.url,
-      publicId: data.publicId ?? null,
+      url: data.url ?? null,
+      storageKey: data.storageKey,
       size: data.size ?? null,
       folderId: data.folderId,
     },

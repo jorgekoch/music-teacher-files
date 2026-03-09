@@ -6,7 +6,7 @@ import {
   updateProfileService,
 } from "../services/profileService";
 import { AppError } from "../errors/AppError";
-import { uploadBufferToCloudinary } from "../services/cloudinaryService";
+import { uploadPublicFile } from "../services/r2Service";
 
 export async function getProfile(
   req: Request,
@@ -15,9 +15,7 @@ export async function getProfile(
 ) {
   try {
     const userId = req.userId!;
-
     const profile = await getProfileService(userId);
-
     res.send(profile);
   } catch (error) {
     next(error);
@@ -32,9 +30,7 @@ export async function updateProfile(
   try {
     const userId = req.userId!;
     const { name } = req.body;
-
     const profile = await updateProfileService(userId, name);
-
     res.send(profile);
   } catch (error) {
     next(error);
@@ -49,9 +45,7 @@ export async function updatePassword(
   try {
     const userId = req.userId!;
     const { currentPassword, newPassword } = req.body;
-
     await updatePasswordService(userId, currentPassword, newPassword);
-
     res.sendStatus(204);
   } catch (error) {
     next(error);
@@ -71,9 +65,14 @@ export async function updateAvatar(
       throw new AppError("File not provided", 400);
     }
 
-    const uploaded = await uploadBufferToCloudinary(file.buffer, file.originalname);
+    const uploaded = await uploadPublicFile(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      "avatars"
+    );
 
-    const profile = await updateAvatarService(userId, uploaded.secure_url);
+    const profile = await updateAvatarService(userId, uploaded.url);
 
     res.send(profile);
   } catch (error) {

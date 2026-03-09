@@ -3,6 +3,7 @@ import {
   uploadFile,
   listFiles,
   deleteFile,
+  getFileDownloadUrl,
 } from "../controllers/filesController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { upload } from "../middlewares/uploadMiddleware";
@@ -28,6 +29,13 @@ router.get(
   authMiddleware,
   validateParams(folderIdParamSchema),
   listFiles
+);
+
+router.get(
+  "/:id/download",
+  authMiddleware,
+  validateParams(idParamSchema),
+  getFileDownloadUrl
 );
 
 router.delete(
