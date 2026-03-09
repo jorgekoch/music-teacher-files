@@ -72,6 +72,12 @@ export function LoginPage() {
           </button>
         </form>
 
+        <p className="auth-link-text">
+          <Link to="/forgot-password" className="auth-link-highlight">
+            Esqueci minha senha
+          </Link>
+        </p>
+
         <p className="muted auth-link-text">
           Não possui conta?{" "}
           <Link to="/register" className="auth-link-highlight">
