@@ -198,12 +198,36 @@ export function DashboardPage() {
   async function handleUpload(file: File) {
     if (!selectedFolderId) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("folderId", String(selectedFolderId));
-
     try {
-      await api.post("/files/upload", formData);
+      const prepareResponse = await api.post<{
+        uploadUrl: string;
+        storageKey: string;
+      }>("/files/upload-url", {
+        folderId: selectedFolderId,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+      });
+
+      const uploadResponse = await fetch(prepareResponse.data.uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Falha no upload direto para o R2");
+      }
+
+      await api.post("/files/complete-upload", {
+        folderId: selectedFolderId,
+        fileName: file.name,
+        fileSize: file.size,
+        storageKey: prepareResponse.data.storageKey,
+      });
+
       toast.success("Arquivo enviado com sucesso.");
       await fetchFiles(selectedFolderId);
       await fetchProfile();

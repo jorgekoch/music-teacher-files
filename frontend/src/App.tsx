@@ -11,6 +11,10 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 
 export default function App() {
+
+  console.log("ENV MODE:", import.meta.env.MODE);
+  console.log("API URL:", import.meta.env.VITE_API_URL);
+  
   return (
     <ThemeProvider>
       <AuthProvider>
