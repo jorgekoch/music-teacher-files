@@ -3,6 +3,14 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { api } from "../services/api";
 
+type ForgotPasswordResponse = {
+  message: string;
+};
+
+type ApiErrorResponse = {
+  error: string;
+};
+
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -13,7 +21,10 @@ export function ForgotPasswordPage() {
     try {
       setLoading(true);
 
-      const response = await api.post("/auth/forgot-password", { email });
+      const response = await api.post<ForgotPasswordResponse>(
+        "/auth/forgot-password",
+        { email }
+      );
 
       toast.success(response.data.message);
       setEmail("");

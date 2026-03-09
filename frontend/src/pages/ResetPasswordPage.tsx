@@ -3,6 +3,10 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { api } from "../services/api";
 
+type ResetPasswordResponse = {
+  message: string;
+};
+
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -21,11 +25,14 @@ export function ResetPasswordPage() {
     try {
       setLoading(true);
 
-      const response = await api.post("/auth/reset-password", {
-        token,
-        password: form.password,
-        confirmPassword: form.confirmPassword,
-      });
+      const response = await api.post<ResetPasswordResponse>(
+        "/auth/reset-password",
+        {
+          token,
+          password: form.password,
+          confirmPassword: form.confirmPassword,
+        }
+      );
 
       toast.success(response.data.message);
       navigate("/login");

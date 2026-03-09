@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getStorageInfo } from "../services/storageService";
 
-type StorageInfo = {
+export type StorageInfo = {
   used: number;
   limit: number;
   plan: string;
