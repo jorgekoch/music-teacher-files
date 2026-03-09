@@ -1,10 +1,28 @@
 import { Router } from "express";
-import { login } from "../controllers/authController";
+import {
+  forgotPassword,
+  login,
+  resetPassword,
+} from "../controllers/authController";
 import { validateBody } from "../middlewares/validateSchemaMiddleware";
-import { loginSchema } from "../schemas/authSchema";
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  resetPasswordSchema,
+} from "../schemas/authSchema";
 
 const router = Router();
 
 router.post("/login", validateBody(loginSchema), login);
+router.post(
+  "/forgot-password",
+  validateBody(forgotPasswordSchema),
+  forgotPassword
+);
+router.post(
+  "/reset-password",
+  validateBody(resetPasswordSchema),
+  resetPassword
+);
 
 export default router;
