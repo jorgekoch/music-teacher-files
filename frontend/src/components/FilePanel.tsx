@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { api } from "../services/api";
 import type { FileItem, Folder } from "../types";
 import { UploadFileForm } from "./UploadFileForm";
 import { LoadingSkeleton } from "./LoadingSkeleton";
@@ -22,6 +24,9 @@ export function FilePanel({
 }: Props) {
   const [search, setSearch] = useState("");
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [loadingPreviewId, setLoadingPreviewId] = useState<number | null>(null);
+  const [loadingOpenId, setLoadingOpenId] = useState<number | null>(null);
 
   const filteredFiles = useMemo(() => {
     const normalized = search.trim().toLowerCase();
@@ -32,6 +37,45 @@ export function FilePanel({
       file.name.toLowerCase().includes(normalized)
     );
   }, [files, search]);
+
+  async function getTemporaryFileUrl(fileId: number) {
+    const response = await api.get<{ url: string }>(`/files/${fileId}/download`);
+    return response.data.url;
+  }
+
+  async function handlePreview(file: FileItem) {
+    try {
+      setLoadingPreviewId(file.id);
+
+      const url = await getTemporaryFileUrl(file.id);
+
+      setPreviewFile(file);
+      setPreviewUrl(url);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Erro ao visualizar arquivo");
+    } finally {
+      setLoadingPreviewId(null);
+    }
+  }
+
+  async function handleOpenInNewTab(file: FileItem) {
+    try {
+      setLoadingOpenId(file.id);
+
+      const url = await getTemporaryFileUrl(file.id);
+
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Erro ao abrir arquivo");
+    } finally {
+      setLoadingOpenId(null);
+    }
+  }
+
+  function handleClosePreview() {
+    setPreviewFile(null);
+    setPreviewUrl(null);
+  }
 
   if (!selectedFolder) {
     return (
@@ -74,7 +118,11 @@ export function FilePanel({
         ) : filteredFiles.length === 0 ? (
           <EmptyState
             emoji="📄"
-            title={files.length === 0 ? "Nenhum arquivo nesta pasta" : "Nenhum resultado encontrado"}
+            title={
+              files.length === 0
+                ? "Nenhum arquivo nesta pasta"
+                : "Nenhum resultado encontrado"
+            }
             description={
               files.length === 0
                 ? "Envie seu primeiro arquivo para começar."
@@ -91,19 +139,21 @@ export function FilePanel({
                   <div className="file-links-row">
                     <button
                       className="link-button"
-                      onClick={() => setPreviewFile(file)}
+                      onClick={() => handlePreview(file)}
+                      disabled={loadingPreviewId === file.id}
                     >
-                      Visualizar
+                      {loadingPreviewId === file.id ? "Carregando..." : "Visualizar"}
                     </button>
 
-                    <a
-                      href={file.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="file-link"
+                    <button
+                      className="link-button"
+                      onClick={() => handleOpenInNewTab(file)}
+                      disabled={loadingOpenId === file.id}
                     >
-                      Abrir em nova aba
-                    </a>
+                      {loadingOpenId === file.id
+                        ? "Abrindo..."
+                        : "Abrir em nova aba"}
+                    </button>
                   </div>
                 </div>
 
@@ -120,9 +170,10 @@ export function FilePanel({
       </section>
 
       <FilePreviewDialog
-        open={Boolean(previewFile)}
+        open={Boolean(previewFile && previewUrl)}
         file={previewFile}
-        onClose={() => setPreviewFile(null)}
+        fileUrl={previewUrl}
+        onClose={handleClosePreview}
       />
     </>
   );

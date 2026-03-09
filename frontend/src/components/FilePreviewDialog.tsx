@@ -4,6 +4,7 @@ import type { FileItem } from "../types";
 type Props = {
   open: boolean;
   file: FileItem | null;
+  fileUrl: string | null;
   onClose: () => void;
 };
 
@@ -22,11 +23,11 @@ function isImage(url: string, name: string) {
   );
 }
 
-export function FilePreviewDialog({ open, file, onClose }: Props) {
-  if (!open || !file) return null;
+export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
+  if (!open || !file || !fileUrl) return null;
 
-  const showPdf = isPdf(file.url, file.name);
-  const showImage = isImage(file.url, file.name);
+  const showPdf = isPdf(fileUrl, file.name);
+  const showImage = isImage(fileUrl, file.name);
 
   return (
     <div className="dialog-overlay" onClick={onClose}>
@@ -48,12 +49,12 @@ export function FilePreviewDialog({ open, file, onClose }: Props) {
         <div className="preview-body">
           {showPdf ? (
             <iframe
-              src={file.url}
+              src={fileUrl}
               title={file.name}
               className="preview-frame"
             />
           ) : showImage ? (
-            <img src={file.url} alt={file.name} className="preview-image" />
+            <img src={fileUrl} alt={file.name} className="preview-image" />
           ) : (
             <div className="empty-state">
               <div className="empty-state-emoji">📄</div>
@@ -62,7 +63,7 @@ export function FilePreviewDialog({ open, file, onClose }: Props) {
                 Esse tipo de arquivo não possui visualização embutida.
               </p>
               <a
-                href={file.url}
+                href={fileUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="primary-button preview-open-link"

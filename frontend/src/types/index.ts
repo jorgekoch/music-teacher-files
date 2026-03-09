@@ -11,8 +11,8 @@ export type Folder = {
 export type FileItem = {
   id: number;
   name: string;
-  url: string;
-  publicId: string;
+  url: string | null;
+  storageKey?: string;
   folderId: number;
   createdAt: string;
 };
@@ -23,7 +23,6 @@ export type Profile = {
   name: string;
   avatarUrl: string | null;
   createdAt: string;
-
   plan: "FREE" | "PRO";
   storageUsed: number;
   storageLimit: number;

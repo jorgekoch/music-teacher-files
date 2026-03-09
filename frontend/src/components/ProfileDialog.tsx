@@ -54,6 +54,10 @@ export function ProfileDialog({
   if (!open || !profile) return null;
 
   function formatBytes(bytes: number) {
+    if (!Number.isFinite(bytes) || bytes < 0) {
+      return "0 MB";
+    }
+
     const mb = bytes / 1024 / 1024;
     const gb = bytes / 1024 / 1024 / 1024;
 
@@ -64,9 +68,17 @@ export function ProfileDialog({
     return `${mb.toFixed(1)} MB`;
   }
 
-  const storagePercentage = profile.storageLimit
-    ? Math.min((profile.storageUsed / profile.storageLimit) * 100, 100)
+  const storageUsed =
+    typeof profile.storageUsed === "number" ? profile.storageUsed : 0;
+
+  const storageLimit =
+    typeof profile.storageLimit === "number" ? profile.storageLimit : 0;
+
+  const storagePercentage = storageLimit
+    ? Math.min((storageUsed / storageLimit) * 100, 100)
     : 0;
+
+  const planLabel = profile.plan || "FREE";
 
   async function handleProfileSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -136,7 +148,7 @@ export function ProfileDialog({
         <div className="profile-storage-section">
           <h4>Armazenamento</h4>
           <p className="muted">
-            Plano atual: <strong>{profile.plan}</strong>
+            Plano atual: <strong>{planLabel}</strong>
           </p>
 
           <div className="storage-bar">
@@ -147,9 +159,14 @@ export function ProfileDialog({
           </div>
 
           <p className="muted">
-            {formatBytes(profile.storageUsed)} de{" "}
-            {formatBytes(profile.storageLimit)} utilizados
+            {formatBytes(storageUsed)} de {formatBytes(storageLimit)} utilizados
           </p>
+
+          {planLabel === "FREE" && (
+            <p className="upgrade-text">
+              Precisa de mais espaço? O plano PRO será lançado em breve.
+            </p>
+          )}
         </div>
 
         <hr className="profile-divider" />
