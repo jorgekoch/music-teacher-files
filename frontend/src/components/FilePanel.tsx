@@ -27,6 +27,7 @@ export function FilePanel({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loadingPreviewId, setLoadingPreviewId] = useState<number | null>(null);
   const [loadingOpenId, setLoadingOpenId] = useState<number | null>(null);
+  const [loadingShareId, setLoadingShareId] = useState<number | null>(null);
 
   const filteredFiles = useMemo(() => {
     const normalized = search.trim().toLowerCase();
@@ -69,6 +70,22 @@ export function FilePanel({
       toast.error(err?.response?.data?.error || "Erro ao abrir arquivo");
     } finally {
       setLoadingOpenId(null);
+    }
+  }
+
+  async function handleShare(file: FileItem) {
+    try {
+      setLoadingShareId(file.id);
+
+      const response = await api.post<{ shareUrl: string }>(`/shared/${file.id}/share`);
+
+      await navigator.clipboard.writeText(response.data.shareUrl);
+
+      toast.success("Link de compartilhamento copiado.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Erro ao compartilhar arquivo");
+    } finally {
+      setLoadingShareId(null);
     }
   }
 
@@ -150,9 +167,15 @@ export function FilePanel({
                       onClick={() => handleOpenInNewTab(file)}
                       disabled={loadingOpenId === file.id}
                     >
-                      {loadingOpenId === file.id
-                        ? "Abrindo..."
-                        : "Abrir em nova aba"}
+                      {loadingOpenId === file.id ? "Abrindo..." : "Abrir em nova aba"}
+                    </button>
+
+                    <button
+                      className="link-button"
+                      onClick={() => handleShare(file)}
+                      disabled={loadingShareId === file.id}
+                    >
+                      {loadingShareId === file.id ? "Copiando..." : "Compartilhar"}
                     </button>
                   </div>
                 </div>
