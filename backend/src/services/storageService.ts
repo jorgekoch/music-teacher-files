@@ -1,5 +1,8 @@
 import { getUserFiles } from "../repositories/filesRepository";
 
+export const FREE_STORAGE_LIMIT = 500 * 1024 * 1024; // 500 MB
+export const PRO_STORAGE_LIMIT = 20 * 1024 * 1024 * 1024; // 20 GB
+
 export async function getUserStorageUsage(userId: number) {
   const files = await getUserFiles(userId);
 
@@ -12,8 +15,8 @@ export async function getUserStorageUsage(userId: number) {
 
 export function getStorageLimit(plan: string) {
   if (plan === "PRO") {
-    return 20 * 1024 * 1024 * 1024;
+    return PRO_STORAGE_LIMIT;
   }
 
-  return 500 * 1024 * 1024;
+  return FREE_STORAGE_LIMIT;
 }

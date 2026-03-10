@@ -180,10 +180,8 @@ export async function moveFileToFolder(
     throw new AppError("O arquivo já está nesta pasta", 400);
   }
 
-  const existingFileInTargetFolder = await filesRepository.findFileByNameInFolder(
-    file.name,
-    targetFolderId
-  );
+  const existingFileInTargetFolder =
+    await filesRepository.findFileByNameInFolder(file.name, targetFolderId);
 
   if (existingFileInTargetFolder) {
     throw new AppError(
