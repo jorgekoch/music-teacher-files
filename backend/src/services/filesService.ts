@@ -159,6 +159,42 @@ export async function updateFileName(
   return filesRepository.updateFileName(id, trimmedName);
 }
 
+export async function moveFileToFolder(
+  fileId: number,
+  targetFolderId: number,
+  userId: number
+) {
+  const file = await filesRepository.getFileById(fileId);
+
+  if (!file) {
+    throw new AppError("Arquivo não encontrado", 404);
+  }
+
+  if (file.folder.userId !== userId) {
+    throw new AppError("Forbidden", 403);
+  }
+
+  const targetFolder = await getOwnedFolderOrFail(targetFolderId, userId);
+
+  if (file.folderId === targetFolder.id) {
+    throw new AppError("O arquivo já está nesta pasta", 400);
+  }
+
+  const existingFileInTargetFolder = await filesRepository.findFileByNameInFolder(
+    file.name,
+    targetFolderId
+  );
+
+  if (existingFileInTargetFolder) {
+    throw new AppError(
+      "Já existe um arquivo com esse nome na pasta de destino",
+      400
+    );
+  }
+
+  return filesRepository.moveFileToFolder(fileId, targetFolderId);
+}
+
 export async function deleteFile(id: number, userId: number) {
   const file = await filesRepository.getFileById(id);
 

@@ -6,6 +6,7 @@ import {
   updateFile,
   deleteFile,
   getFileDownloadUrl,
+  moveFile,
 } from "../controllers/filesController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { validateParams } from "../middlewares/validateSchemaMiddleware";
@@ -28,6 +29,13 @@ router.get(
   authMiddleware,
   validateParams(idParamSchema),
   getFileDownloadUrl
+);
+
+router.patch(
+  "/:id/move",
+  authMiddleware,
+  validateParams(idParamSchema),
+  moveFile
 );
 
 router.patch(

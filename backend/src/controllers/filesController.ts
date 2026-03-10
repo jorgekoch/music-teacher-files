@@ -87,6 +87,28 @@ export async function updateFile(
   }
 }
 
+export async function moveFile(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { id } = req.params;
+    const userId = req.userId!;
+    const folderId = Number(req.body.folderId);
+
+    const movedFile = await filesService.moveFileToFolder(
+      Number(id),
+      folderId,
+      userId
+    );
+
+    res.send(movedFile);
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function deleteFile(
   req: Request,
   res: Response,

@@ -52,6 +52,13 @@ export function updateFileName(id: number, name: string) {
   });
 }
 
+export function moveFileToFolder(id: number, folderId: number) {
+  return prisma.file.update({
+    where: { id },
+    data: { folderId },
+  });
+}
+
 export function deleteFileById(id: number) {
   return prisma.file.delete({
     where: { id },
