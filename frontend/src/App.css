@@ -56,6 +56,8 @@
 
 .file-icon {
   font-size: 18px;
+  width: 22px;
+  text-align: center;
 }
 
 .file-details {

@@ -63,6 +63,49 @@ export function FilePanel({
     });
   }
 
+  function getFileIcon(fileName: string) {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+
+  switch (extension) {
+    case "pdf":
+      return "📄";
+
+    case "doc":
+    case "docx":
+      return "📘";
+
+    case "xls":
+    case "xlsx":
+      return "📊";
+
+    case "ppt":
+    case "pptx":
+      return "📈";
+
+    case "jpg":
+    case "jpeg":
+    case "png":
+    case "gif":
+    case "webp":
+      return "🖼";
+
+    case "mp3":
+    case "wav":
+      return "🎵";
+
+    case "zip":
+    case "rar":
+    case "7z":
+      return "📦";
+
+    case "txt":
+      return "📝";
+
+    default:
+      return "📁";
+    }
+  }
+
   async function getTemporaryFileUrl(fileId: number) {
     const response = await api.get<{ url: string }>(`/files/${fileId}/download`);
     return response.data.url;
@@ -181,7 +224,7 @@ export function FilePanel({
                 <div className="file-info">
                   <div className="file-meta">
                     <div className="file-title-row">
-                      <span className="file-icon">📄</span>
+                      <span className="file-icon">{getFileIcon(file.name)}</span>
                       <strong className="file-name-text">{file.name}</strong>
                     </div>
 
