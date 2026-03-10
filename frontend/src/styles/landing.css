@@ -261,3 +261,8 @@
   gap: 12px;
   flex-wrap: wrap;
 }
+
+.plan-price-note{
+  font-size:14px;
+  color:var(--text-muted);
+}

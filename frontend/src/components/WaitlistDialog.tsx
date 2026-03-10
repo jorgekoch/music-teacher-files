@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { api } from "../services/api";
 
@@ -13,6 +13,22 @@ export function WaitlistDialog({ open, onClose }: Props) {
     email: "",
   });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -39,16 +55,58 @@ export function WaitlistDialog({ open, onClose }: Props) {
     }
   }
 
+  function handleOverlayClick() {
+    onClose();
+  }
+
+  function handleDialogClick(e: React.MouseEvent<HTMLDivElement>) {
+    e.stopPropagation();
+  }
+
   return (
-    <div className="dialog-overlay" onClick={onClose}>
+    <div className="dialog-overlay" onClick={handleOverlayClick}>
       <div
         className="dialog-card waitlist-dialog-card"
-        onClick={(e) => e.stopPropagation()}
+        onClick={handleDialogClick}
       >
-        <h3>Quero ser avisado sobre o PRO</h3>
-        <p className="muted">
-          Deixe seu nome e e-mail para entrar na lista de interesse do plano PRO.
+        <p className="eyebrow">Plano PRO</p>
+        <h3 className="waitlist-title">Entre na lista de interesse</h3>
+
+        <p className="muted waitlist-description">
+          O plano PRO terá mais armazenamento e recursos extras.
+          <br />
+          <strong>Preço previsto: R$19,90/mês.</strong>
         </p>
+
+        <div className="waitlist-benefits">
+          <div className="waitlist-benefit">
+            <span className="waitlist-benefit__icon">💾</span>
+            <div>
+              <strong>Mais armazenamento</strong>
+              <p className="muted">Ideal para quem precisa guardar mais arquivos.</p>
+            </div>
+          </div>
+
+          <div className="waitlist-benefit">
+            <span className="waitlist-benefit__icon">⚡</span>
+            <div>
+              <strong>Recursos extras</strong>
+              <p className="muted">
+                Tenha acesso às próximas melhorias do Arquivapp.
+              </p>
+            </div>
+          </div>
+
+          <div className="waitlist-benefit">
+            <span className="waitlist-benefit__icon">📩</span>
+            <div>
+              <strong>Aviso quando estiver disponível</strong>
+              <p className="muted">
+                Entraremos em contato quando o plano PRO for liberado.
+              </p>
+            </div>
+          </div>
+        </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <input
@@ -76,6 +134,11 @@ export function WaitlistDialog({ open, onClose }: Props) {
             {loading ? "Salvando..." : "Entrar na lista"}
           </button>
         </form>
+
+        <p className="muted waitlist-footnote">
+          Sem compromisso. Apenas vamos avisar quando houver novidades sobre o
+          plano PRO.
+        </p>
 
         <div className="dialog-actions">
           <button className="ghost-button" onClick={onClose}>

@@ -206,7 +206,9 @@ export function ProfileDialog({
               <div>
                 <strong>Precisa de mais espaço?</strong>
                 <p className="muted">
-                  Entre na lista de interesse do plano PRO para receber novidades.
+                  O plano PRO terá mais armazenamento e recursos extras.
+                  <br />
+                  <strong>Preço previsto: R$19,90/mês.</strong>
                 </p>
               </div>
 

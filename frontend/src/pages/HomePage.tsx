@@ -194,7 +194,10 @@ export function HomePage() {
                   PRO
                 </p>
                 <h4>Plano Pro</h4>
-                <p className="landing-plan-card__price">Em breve</p>
+                <p className="plan-price">
+                  R$19,90/mês
+                  <span className="plan-price-note"> (em breve)</span>
+                </p>
                 <p className="muted">
                   Mais espaço e mais possibilidades para quem precisa de mais.
                 </p>

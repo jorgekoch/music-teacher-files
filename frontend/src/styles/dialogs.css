@@ -42,3 +42,55 @@
 .waitlist-dialog-card {
   max-width: 460px;
 }
+
+/* WAITLIST DIALOG */
+.waitlist-dialog-card {
+  max-width: 520px;
+}
+
+.waitlist-title {
+  margin: 0 0 8px;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.waitlist-description {
+  margin: 0 0 18px;
+}
+
+.waitlist-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.waitlist-benefit {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-secondary);
+}
+
+.waitlist-benefit__icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.waitlist-benefit strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.waitlist-benefit p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.waitlist-footnote {
+  margin: 14px 0 0;
+  font-size: 13px;
+}
