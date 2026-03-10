@@ -17,6 +17,9 @@ import { useAuth } from "../hooks/useAuth";
 const SELECTED_FOLDER_STORAGE_KEY = "Arquivapp:selectedFolderId";
 const ONBOARDING_DISMISSED_STORAGE_KEY = "Arquivapp:onboardingDismissed";
 
+const DASHBOARD_CACHE_KEY = "Arquivapp:dashboardInitCache";
+const DASHBOARD_CACHE_TTL_MS = 20 * 1000;
+
 type DashboardInitResponse = {
   profile: Profile;
   folders: Folder[];
@@ -24,12 +27,17 @@ type DashboardInitResponse = {
   selectedFolderId: number | null;
 };
 
+type DashboardCachePayload = {
+  timestamp: number;
+  data: DashboardInitResponse;
+};
+
 export function DashboardPage() {
-  const { logout } = useAuth();
+  const { logout, user, setUser } = useAuth();
 
   const createFolderSectionRef = useRef<HTMLDivElement | null>(null);
 
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(user);
   const [profileOpen, setProfileOpen] = useState(false);
   const [waitlistOpen, setWaitlistOpen] = useState(false);
 
@@ -84,10 +92,56 @@ export function DashboardPage() {
     setShowOnboarding(false);
   }
 
+  function saveDashboardCache(data: DashboardInitResponse) {
+    const payload: DashboardCachePayload = {
+      timestamp: Date.now(),
+      data,
+    };
+
+    sessionStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify(payload));
+  }
+
+  function getDashboardCache(): DashboardInitResponse | null {
+    const raw = sessionStorage.getItem(DASHBOARD_CACHE_KEY);
+    if (!raw) return null;
+
+    try {
+      const parsed = JSON.parse(raw) as DashboardCachePayload;
+
+      const isExpired =
+        Date.now() - parsed.timestamp > DASHBOARD_CACHE_TTL_MS;
+
+      if (isExpired) {
+        sessionStorage.removeItem(DASHBOARD_CACHE_KEY);
+        return null;
+      }
+
+      return parsed.data;
+    } catch {
+      sessionStorage.removeItem(DASHBOARD_CACHE_KEY);
+      return null;
+    }
+  }
+
+  function clearDashboardCache() {
+    sessionStorage.removeItem(DASHBOARD_CACHE_KEY);
+  }
+
+  function applyDashboardData(data: DashboardInitResponse) {
+    setProfile(data.profile);
+    setUser(data.profile);
+    setFolders(data.folders);
+    setFiles(data.files);
+    setSelectedFolderId(data.selectedFolderId);
+    setSelectedFileIds([]);
+    saveSelectedFolderId(data.selectedFolderId);
+  }
+
   async function fetchProfile() {
     try {
       const response = await api.get<Profile>("/profile");
       setProfile(response.data);
+      setUser(response.data);
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao carregar perfil");
     }
@@ -106,6 +160,7 @@ export function DashboardPage() {
         setSelectedFolderId(null);
         setFiles([]);
         saveSelectedFolderId(null);
+        clearDashboardCache();
         return null;
       }
 
@@ -116,6 +171,7 @@ export function DashboardPage() {
       );
 
       if (selectedFolderId && currentFolderStillExists) {
+        clearDashboardCache();
         return selectedFolderId;
       }
 
@@ -126,11 +182,13 @@ export function DashboardPage() {
       if (storedSelectedFolderId && storedFolderStillExists) {
         setSelectedFolderId(storedSelectedFolderId);
         saveSelectedFolderId(storedSelectedFolderId);
+        clearDashboardCache();
         return storedSelectedFolderId;
       }
 
       setSelectedFolderId(folderList[0].id);
       saveSelectedFolderId(folderList[0].id);
+      clearDashboardCache();
       return folderList[0].id;
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao carregar pastas");
@@ -146,6 +204,7 @@ export function DashboardPage() {
       const response = await api.get<FileItem[]>(`/files/folder/${folderId}`);
       setFiles(response.data);
       setSelectedFileIds([]);
+      clearDashboardCache();
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao carregar arquivos");
     } finally {
@@ -154,6 +213,13 @@ export function DashboardPage() {
   }
 
   async function loadInitialDashboard() {
+    const cachedData = getDashboardCache();
+
+    if (cachedData) {
+      applyDashboardData(cachedData);
+      return;
+    }
+
     try {
       setLoadingFolders(true);
       setLoadingFiles(true);
@@ -166,15 +232,13 @@ export function DashboardPage() {
 
       const data = response.data;
 
-      setProfile(data.profile);
-      setFolders(data.folders);
-      setFiles(data.files);
-      setSelectedFolderId(data.selectedFolderId);
-      setSelectedFileIds([]);
-
-      saveSelectedFolderId(data.selectedFolderId);
+      applyDashboardData(data);
+      saveDashboardCache(data);
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Erro ao carregar dashboard");
+      console.error("Erro real no loadInitialDashboard:", err);
+      console.error("Resposta do backend: ", err?.response?.status)
+
+      toast.error(err?.response?.data?.error || err?.message ||"Erro ao carregar dashboard");
     } finally {
       setLoadingFolders(false);
       setLoadingFiles(false);
@@ -240,6 +304,7 @@ export function DashboardPage() {
 
       toast.success("Pasta criada com sucesso.");
       dismissOnboarding();
+      clearDashboardCache();
 
       await fetchFolders();
       setSelectedFolderId(createdFolder.id);
@@ -257,6 +322,7 @@ export function DashboardPage() {
       await api.patch(`/folders/${folderToEdit.id}`, { name });
       toast.success("Pasta renomeada com sucesso.");
       setFolderToEdit(null);
+      clearDashboardCache();
       await fetchFolders();
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao renomear pasta");
@@ -274,6 +340,7 @@ export function DashboardPage() {
       await api.delete(`/folders/${deletedFolderId}`);
       toast.success("Pasta excluída com sucesso.");
       setFolderToDelete(null);
+      clearDashboardCache();
 
       if (wasSelectedFolder) {
         setSelectedFolderId(null);
@@ -330,6 +397,7 @@ export function DashboardPage() {
       });
 
       dismissOnboarding();
+      clearDashboardCache();
       await Promise.all([fetchFiles(selectedFolderId), fetchProfile()]);
     } catch (err: any) {
       const message =
@@ -348,6 +416,7 @@ export function DashboardPage() {
       await api.patch(`/files/${fileToEdit.id}`, { name });
       toast.success("Arquivo renomeado com sucesso.");
       setFileToEdit(null);
+      clearDashboardCache();
       await fetchFiles(selectedFolderId);
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao renomear arquivo");
@@ -366,6 +435,7 @@ export function DashboardPage() {
       toast.success("Arquivo movido com sucesso.");
       setDraggingFileId(null);
       setSelectedFileIds([]);
+      clearDashboardCache();
 
       await Promise.all([fetchFolders(), fetchProfile()]);
       await fetchFiles(selectedFolderId);
@@ -382,6 +452,7 @@ export function DashboardPage() {
       await api.delete(`/files/${fileToDelete.id}`);
       toast.success("Arquivo excluído com sucesso.");
       setFileToDelete(null);
+      clearDashboardCache();
       await Promise.all([fetchFiles(selectedFolderId), fetchProfile()]);
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao excluir arquivo");
@@ -405,6 +476,7 @@ export function DashboardPage() {
 
       setFilesToDelete([]);
       setSelectedFileIds([]);
+      clearDashboardCache();
       await Promise.all([fetchFiles(selectedFolderId), fetchProfile()]);
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao excluir arquivos");
@@ -416,6 +488,8 @@ export function DashboardPage() {
     try {
       const response = await api.patch<Profile>("/profile", { name });
       setProfile(response.data);
+      setUser(response.data);
+      clearDashboardCache();
       toast.success("Perfil atualizado com sucesso.");
       setProfileOpen(false);
     } catch (err: any) {
@@ -442,6 +516,8 @@ export function DashboardPage() {
     try {
       const response = await api.patch<Profile>("/profile/avatar", formData);
       setProfile(response.data);
+      setUser(response.data);
+      clearDashboardCache();
       toast.success("Foto de perfil atualizada com sucesso.");
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao atualizar foto");

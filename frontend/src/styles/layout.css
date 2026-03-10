@@ -52,6 +52,12 @@
   gap: 14px;
 }
 
+.dashboard-header,
+.sidebar,
+.content {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
 /* GENERIC SECTION LAYOUT */
 
 .section-header {

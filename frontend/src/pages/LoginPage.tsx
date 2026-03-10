@@ -26,7 +26,6 @@ export function LoginPage() {
     try {
       setLoading(true);
       await login(form);
-      toast.success("Login realizado com sucesso.");
       navigate("/dashboard");
     } catch (err: any) {
       const message = err?.response?.data?.error || "Erro ao fazer login";
@@ -68,7 +67,7 @@ export function LoginPage() {
           {error && <p className="feedback-inline-error">{error}</p>}
 
           <button className="primary-button full-width" disabled={loading}>
-            {loading ? "Entrando..." : "Entrar"}
+            {loading ? "Entrando e preparando seu painel..." : "Entrar"}
           </button>
         </form>
 
