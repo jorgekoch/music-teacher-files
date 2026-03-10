@@ -50,9 +50,12 @@ export function UserMenu({ profile, onProfileClick, onLogout }: Props) {
   return (
     <div className="user-menu-wrapper" ref={wrapperRef}>
       <button
+        type="button"
         className={`user-menu-trigger ${open ? "user-menu-trigger-open" : ""}`}
         onClick={() => setOpen((prev) => !prev)}
         aria-label="Abrir menu do usuário"
+        aria-haspopup="menu"
+        aria-expanded={open}
       >
         <UserAvatar
           name={profile?.name}
