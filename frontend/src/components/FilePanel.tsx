@@ -12,6 +12,7 @@ type Props = {
   files: FileItem[];
   loading: boolean;
   onUpload: (file: File) => Promise<void>;
+  onEditFile: (file: FileItem) => void;
   onDeleteFile: (file: FileItem) => void;
 };
 
@@ -20,6 +21,7 @@ export function FilePanel({
   files,
   loading,
   onUpload,
+  onEditFile,
   onDeleteFile,
 }: Props) {
   const [search, setSearch] = useState("");
@@ -47,9 +49,7 @@ export function FilePanel({
   async function handlePreview(file: FileItem) {
     try {
       setLoadingPreviewId(file.id);
-
       const url = await getTemporaryFileUrl(file.id);
-
       setPreviewFile(file);
       setPreviewUrl(url);
     } catch (err: any) {
@@ -62,9 +62,7 @@ export function FilePanel({
   async function handleOpenInNewTab(file: FileItem) {
     try {
       setLoadingOpenId(file.id);
-
       const url = await getTemporaryFileUrl(file.id);
-
       window.open(url, "_blank", "noopener,noreferrer");
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao abrir arquivo");
@@ -76,11 +74,8 @@ export function FilePanel({
   async function handleShare(file: FileItem) {
     try {
       setLoadingShareId(file.id);
-
       const response = await api.post<{ shareUrl: string }>(`/shared/${file.id}/share`);
-
       await navigator.clipboard.writeText(response.data.shareUrl);
-
       toast.success("Link de compartilhamento copiado.");
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao compartilhar arquivo");
@@ -176,6 +171,13 @@ export function FilePanel({
                       disabled={loadingShareId === file.id}
                     >
                       {loadingShareId === file.id ? "Copiando..." : "Compartilhar"}
+                    </button>
+
+                    <button
+                      className="link-button"
+                      onClick={() => onEditFile(file)}
+                    >
+                      Renomear
                     </button>
                   </div>
                 </div>

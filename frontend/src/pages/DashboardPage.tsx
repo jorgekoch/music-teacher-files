@@ -8,6 +8,7 @@ import { FolderSidebar } from "../components/FolderSidebar";
 import { FilePanel } from "../components/FilePanel";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { EditFolderDialog } from "../components/EditFolderDialog";
+import { EditFileDialog } from "../components/EditFileDialog";
 import { ProfileDialog } from "../components/ProfileDialog";
 import { useAuth } from "../hooks/useAuth";
 
@@ -28,6 +29,7 @@ export function DashboardPage() {
   const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
   const [folderToEdit, setFolderToEdit] = useState<Folder | null>(null);
   const [fileToDelete, setFileToDelete] = useState<FileItem | null>(null);
+  const [fileToEdit, setFileToEdit] = useState<FileItem | null>(null);
 
   const selectedFolder = useMemo(
     () => folders.find((folder) => folder.id === selectedFolderId) || null,
@@ -195,7 +197,7 @@ export function DashboardPage() {
     }
   }
 
-    async function handleUpload(file: File) {
+  async function handleUpload(file: File) {
     if (!selectedFolderId) return;
 
     try {
@@ -238,6 +240,20 @@ export function DashboardPage() {
         "Erro ao enviar arquivo";
 
       toast.error(message);
+    }
+  }
+
+  async function handleUpdateFile(name: string) {
+    if (!fileToEdit || !selectedFolderId) return;
+
+    try {
+      await api.patch(`/files/${fileToEdit.id}`, { name });
+      toast.success("Arquivo renomeado com sucesso.");
+      setFileToEdit(null);
+      await fetchFiles(selectedFolderId);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Erro ao renomear arquivo");
+      setFileToEdit(null);
     }
   }
 
@@ -317,6 +333,7 @@ export function DashboardPage() {
           files={files}
           loading={loadingFiles}
           onUpload={handleUpload}
+          onEditFile={setFileToEdit}
           onDeleteFile={setFileToDelete}
         />
       </div>
@@ -326,6 +343,13 @@ export function DashboardPage() {
         folder={folderToEdit}
         onCancel={() => setFolderToEdit(null)}
         onConfirm={handleUpdateFolder}
+      />
+
+      <EditFileDialog
+        open={Boolean(fileToEdit)}
+        file={fileToEdit}
+        onCancel={() => setFileToEdit(null)}
+        onConfirm={handleUpdateFile}
       />
 
       <ConfirmDialog
