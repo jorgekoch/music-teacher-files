@@ -13,9 +13,9 @@ export async function login(
   try {
     const { email, password } = req.body;
 
-    const token = await loginService(email, password);
+    const result = await loginService(email, password);
 
-    res.send({ token });
+    res.send(result);
   } catch (error) {
     next(error);
   }

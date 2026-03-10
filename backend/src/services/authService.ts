@@ -28,5 +28,15 @@ export async function loginService(email: string, password: string) {
     { expiresIn: "1d" }
   );
 
-  return token;
+  return {
+    token,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      plan: user.plan,
+      createdAt: user.createdAt,
+    },
+  };
 }
