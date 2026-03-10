@@ -270,7 +270,6 @@ export function DashboardPage() {
         storageKey: prepareResponse.data.storageKey,
       });
 
-      toast.success("Arquivo enviado com sucesso.");
       dismissOnboarding();
       await fetchFiles(selectedFolderId);
       await fetchProfile();
