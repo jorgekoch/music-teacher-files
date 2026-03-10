@@ -25,10 +25,11 @@ export function UploadFileForm({ disabled = false, onUpload }: Props) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingFileName, setUploadingFileName] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [uploadingCount, setUploadingCount] = useState(0);
 
   function validateFile(file: File) {
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      toast.error("Tipo de arquivo não permitido.");
+      toast.error(`Tipo de arquivo não permitido: ${file.name}`);
       return false;
     }
 
@@ -39,6 +40,7 @@ export function UploadFileForm({ disabled = false, onUpload }: Props) {
     setUploadProgress(0);
     setUploadingFileName("");
     setUploadSuccess(false);
+    setUploadingCount(0);
   }
 
   function startFakeProgress() {
@@ -63,26 +65,57 @@ export function UploadFileForm({ disabled = false, onUpload }: Props) {
     }
   }
 
-  async function handleSelectedFile(file: File | null) {
-    if (!file || disabled || loading) return;
+  async function handleSelectedFiles(files: FileList | File[] | null) {
+    if (!files || disabled || loading) return;
 
-    if (!validateFile(file)) {
+    const validFiles = Array.from(files).filter(validateFile);
+
+    if (validFiles.length === 0) {
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
       return;
     }
 
     try {
       setLoading(true);
       setUploadSuccess(false);
-      setUploadingFileName(file.name);
       setUploadProgress(0);
+      setUploadingCount(validFiles.length);
+
+      if (validFiles.length === 1) {
+        setUploadingFileName(validFiles[0].name);
+      } else {
+        setUploadingFileName(`${validFiles.length} arquivos`);
+      }
 
       startFakeProgress();
 
-      await onUpload(file);
+      const results = await Promise.allSettled(
+        validFiles.map((file) => onUpload(file))
+      );
+
+      const successCount = results.filter(
+        (result) => result.status === "fulfilled"
+      ).length;
+
+      const failedCount = results.length - successCount;
 
       stopFakeProgress();
       setUploadProgress(100);
-      setUploadSuccess(true);
+
+      if (successCount > 0) {
+        setUploadSuccess(true);
+      }
+
+      if (validFiles.length > 1) {
+        if (failedCount === 0) {
+          toast.success(`${successCount} arquivos enviados com sucesso.`);
+        } else if (successCount > 0) {
+          toast.success(`${successCount} arquivos enviados com sucesso.`);
+          toast.error(`${failedCount} arquivos não puderam ser enviados.`);
+        }
+      }
 
       window.setTimeout(() => {
         resetUploadVisualState();
@@ -98,8 +131,7 @@ export function UploadFileForm({ disabled = false, onUpload }: Props) {
   }
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] || null;
-    void handleSelectedFile(file);
+    void handleSelectedFiles(e.target.files);
   }
 
   function handleOpenFilePicker() {
@@ -124,8 +156,7 @@ export function UploadFileForm({ disabled = false, onUpload }: Props) {
 
     if (disabled || loading) return;
 
-    const file = e.dataTransfer.files?.[0] || null;
-    void handleSelectedFile(file);
+    void handleSelectedFiles(e.dataTransfer.files);
   }
 
   useEffect(() => {
@@ -165,6 +196,7 @@ export function UploadFileForm({ disabled = false, onUpload }: Props) {
         ref={inputRef}
         type="file"
         hidden
+        multiple
         accept=".pdf,.mp3,.wav,.jpg,.jpeg,.png,.doc,.docx"
         onChange={handleInputChange}
       />
@@ -177,16 +209,18 @@ export function UploadFileForm({ disabled = false, onUpload }: Props) {
         <div className="upload-dropzone-texts">
           <strong>
             {uploadSuccess
-              ? "Arquivo enviado com sucesso"
+              ? uploadingCount > 1
+                ? "Arquivos enviados com sucesso"
+                : "Arquivo enviado com sucesso"
               : loading
-              ? "Enviando arquivo..."
-              : "Arraste um arquivo aqui ou clique para selecionar"}
+              ? uploadingCount > 1
+                ? "Enviando arquivos..."
+                : "Enviando arquivo..."
+              : "Arraste arquivos aqui ou clique para selecionar"}
           </strong>
 
           <p className="muted upload-dropzone-subtitle">
-            {uploadSuccess
-              ? uploadingFileName
-              : loading
+            {uploadSuccess || loading
               ? uploadingFileName
               : "Formatos aceitos: PDF, MP3, WAV, JPG, PNG, DOC e DOCX"}
           </p>
