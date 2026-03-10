@@ -19,6 +19,8 @@ type Props = {
   onSelectAllFiles: (fileIds: number[]) => void;
   onClearFileSelection: () => void;
   onDeleteSelectedFiles: (files: FileItem[]) => void;
+  onStartDraggingFile: (fileId: number) => void;
+  onEndDraggingFile: () => void;
 };
 
 type SortOption =
@@ -43,6 +45,8 @@ export function FilePanel({
   onSelectAllFiles,
   onClearFileSelection,
   onDeleteSelectedFiles,
+  onStartDraggingFile,
+  onEndDraggingFile,
 }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
@@ -314,7 +318,9 @@ export function FilePanel({
             <div className="file-bulk-actions__buttons">
               <button
                 className="ghost-button small"
-                onClick={allVisibleSelected ? onClearFileSelection : handleSelectAllVisible}
+                onClick={
+                  allVisibleSelected ? onClearFileSelection : handleSelectAllVisible
+                }
               >
                 {allVisibleSelected ? "Limpar seleção" : "Selecionar visíveis"}
               </button>
@@ -360,6 +366,13 @@ export function FilePanel({
                   className={`file-item mobile-file-item ${
                     isSelected ? "file-item-selected" : ""
                   } ${viewMode === "grid" ? "file-item-grid" : ""}`}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("text/plain", String(file.id));
+                    e.dataTransfer.effectAllowed = "move";
+                    onStartDraggingFile(file.id);
+                  }}
+                  onDragEnd={onEndDraggingFile}
                 >
                   <div className="file-selection">
                     <input

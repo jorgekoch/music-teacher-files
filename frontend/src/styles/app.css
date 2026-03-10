@@ -893,3 +893,17 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* MOVING FILES */
+.folder-drop-target {
+  border-color: var(--accent);
+  background: rgba(180, 35, 24, 0.08);
+}
+
+.file-item[draggable="true"] {
+  cursor: grab;
+}
+
+.file-item[draggable="true"]:active {
+  cursor: grabbing;
+}

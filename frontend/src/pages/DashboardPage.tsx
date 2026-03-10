@@ -40,6 +40,7 @@ export function DashboardPage() {
 
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [selectedFileIds, setSelectedFileIds] = useState<number[]>([]);
+  const [draggingFileId, setDraggingFileId] = useState<number | null>(null);
 
   const selectedFolder = useMemo(
     () => folders.find((folder) => folder.id === selectedFolderId) || null,
@@ -320,6 +321,27 @@ export function DashboardPage() {
     }
   }
 
+  async function handleMoveFile(fileId: number, targetFolderId: number) {
+    if (!selectedFolderId) return;
+
+    try {
+      await api.patch(`/files/${fileId}/move`, {
+        folderId: targetFolderId,
+      });
+
+      toast.success("Arquivo movido com sucesso.");
+      setDraggingFileId(null);
+      setSelectedFileIds([]);
+
+      await fetchFolders();
+      await fetchFiles(selectedFolderId);
+      await fetchProfile();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Erro ao mover arquivo");
+      setDraggingFileId(null);
+    }
+  }
+
   async function confirmDeleteFile() {
     if (!fileToDelete || !selectedFolderId) return;
 
@@ -339,7 +361,9 @@ export function DashboardPage() {
     if (filesToDelete.length === 0 || !selectedFolderId) return;
 
     try {
-      await Promise.all(filesToDelete.map((file) => api.delete(`/files/${file.id}`)));
+      await Promise.all(
+        filesToDelete.map((file) => api.delete(`/files/${file.id}`))
+      );
 
       toast.success(
         filesToDelete.length === 1
@@ -417,6 +441,8 @@ export function DashboardPage() {
           onSelectFolder={handleSelectFolder}
           onEditFolder={setFolderToEdit}
           onDeleteFolder={setFolderToDelete}
+          draggingFileId={draggingFileId}
+          onDropFileOnFolder={handleMoveFile}
         />
 
         <FilePanel
@@ -431,6 +457,8 @@ export function DashboardPage() {
           onSelectAllFiles={handleSelectAllFiles}
           onClearFileSelection={handleClearFileSelection}
           onDeleteSelectedFiles={handleDeleteSelectedFiles}
+          onStartDraggingFile={setDraggingFileId}
+          onEndDraggingFile={() => setDraggingFileId(null)}
         />
       </div>
 
