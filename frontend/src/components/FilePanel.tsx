@@ -14,6 +14,11 @@ type Props = {
   onUpload: (file: File) => Promise<void>;
   onEditFile: (file: FileItem) => void;
   onDeleteFile: (file: FileItem) => void;
+  selectedFileIds: number[];
+  onToggleFileSelection: (fileId: number) => void;
+  onSelectAllFiles: (fileIds: number[]) => void;
+  onClearFileSelection: () => void;
+  onDeleteSelectedFiles: (files: FileItem[]) => void;
 };
 
 type SortOption =
@@ -31,6 +36,11 @@ export function FilePanel({
   onUpload,
   onEditFile,
   onDeleteFile,
+  selectedFileIds,
+  onToggleFileSelection,
+  onSelectAllFiles,
+  onClearFileSelection,
+  onDeleteSelectedFiles,
 }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
@@ -83,6 +93,15 @@ export function FilePanel({
         return list;
     }
   }, [filteredFiles, sortBy]);
+
+  const selectedFilesInCurrentView = useMemo(
+    () => sortedFiles.filter((file) => selectedFileIds.includes(file.id)),
+    [sortedFiles, selectedFileIds]
+  );
+
+  const allVisibleSelected =
+    sortedFiles.length > 0 &&
+    sortedFiles.every((file) => selectedFileIds.includes(file.id));
 
   function formatFileSize(size?: number | null) {
     if (!size) return "Tamanho desconhecido";
@@ -138,25 +157,6 @@ export function FilePanel({
         return "📝";
       default:
         return "📁";
-    }
-  }
-
-  function getSortLabel(value: SortOption) {
-    switch (value) {
-      case "newest":
-        return "Recentes";
-      case "oldest":
-        return "Antigos";
-      case "name-asc":
-        return "Nome A-Z";
-      case "name-desc":
-        return "Nome Z-A";
-      case "size-desc":
-        return "Maior tamanho";
-      case "size-asc":
-        return "Menor tamanho";
-      default:
-        return "Ordenar";
     }
   }
 
@@ -218,6 +218,10 @@ export function FilePanel({
     setPreviewUrl(null);
   }
 
+  function handleSelectAllVisible() {
+    onSelectAllFiles(sortedFiles.map((file) => file.id));
+  }
+
   if (!selectedFolder) {
     return (
       <section className="content card mobile-section-card center-content">
@@ -242,16 +246,12 @@ export function FilePanel({
           </div>
 
           <div className="file-sort-compact">
-            <label className="file-sort-compact__label" htmlFor="file-sort">
-              Ordenação: 
-            </label>
+            <span className="file-sort-label">Ordenação</span>
 
             <select
-              id="file-sort"
               className="file-sort-compact__select"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              aria-label="Ordenar arquivos"
             >
               <option value="newest">Recentes</option>
               <option value="oldest">Antigos</option>
@@ -275,6 +275,33 @@ export function FilePanel({
           />
         </div>
 
+        {selectedFileIds.length > 0 && (
+          <div className="file-bulk-actions">
+            <div>
+              <strong>{selectedFileIds.length} arquivo(s) selecionado(s)</strong>
+              <p className="muted">
+                Você pode limpar a seleção ou excluir os arquivos selecionados.
+              </p>
+            </div>
+
+            <div className="file-bulk-actions__buttons">
+              <button
+                className="ghost-button small"
+                onClick={allVisibleSelected ? onClearFileSelection : handleSelectAllVisible}
+              >
+                {allVisibleSelected ? "Limpar seleção" : "Selecionar visíveis"}
+              </button>
+
+              <button
+                className="danger-button small"
+                onClick={() => onDeleteSelectedFiles(selectedFilesInCurrentView)}
+              >
+                Excluir selecionados
+              </button>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <LoadingSkeleton lines={5} height={62} />
         ) : sortedFiles.length === 0 ? (
@@ -293,78 +320,96 @@ export function FilePanel({
           />
         ) : (
           <div className="file-list mobile-file-list">
-            {sortedFiles.map((file) => (
-              <div key={file.id} className="file-item mobile-file-item">
-                <div className="file-info">
-                  <div className="file-meta">
-                    <div className="file-title-row">
-                      <span className="file-icon">{getFileIcon(file.name)}</span>
-                      <strong className="file-name-text">{file.name}</strong>
-                    </div>
+            {sortedFiles.map((file) => {
+              const isSelected = selectedFileIds.includes(file.id);
 
-                    <div className="file-details-stack">
-                      <div className="file-size-line">
-                        {formatFileSize(file.size)}
-                      </div>
-
-                      <div className="file-date-line">
-                        enviado em {formatDate(file.createdAt)}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="file-links-row">
-                    <button
-                      className="link-button"
-                      onClick={() => handlePreview(file)}
-                      disabled={loadingPreviewId === file.id}
-                    >
-                      {loadingPreviewId === file.id
-                        ? "Carregando..."
-                        : "Visualizar"}
-                    </button>
-
-                    <button
-                      className="link-button"
-                      onClick={() => handleOpenInNewTab(file)}
-                      disabled={loadingOpenId === file.id}
-                    >
-                      {loadingOpenId === file.id
-                        ? "Abrindo..."
-                        : "Abrir em nova aba"}
-                    </button>
-
-                    <button
-                      className={`link-button ${
-                        copiedShareId === file.id ? "link-button-success" : ""
-                      }`}
-                      onClick={() => handleShare(file)}
-                      disabled={loadingShareId === file.id}
-                    >
-                      {loadingShareId === file.id
-                        ? "Copiando..."
-                        : copiedShareId === file.id
-                        ? "Copiado"
-                        : "Compartilhar"}
-                    </button>
-
-                    <button
-                      className="link-button"
-                      onClick={() => onEditFile(file)}
-                    >
-                      Renomear
-                    </button>
-                  </div>
-                </div>
-
-                <button
-                  className="danger-button small file-delete-button"
-                  onClick={() => onDeleteFile(file)}
+              return (
+                <div
+                  key={file.id}
+                  className={`file-item mobile-file-item ${
+                    isSelected ? "file-item-selected" : ""
+                  }`}
                 >
-                  Excluir
-                </button>
-              </div>
-            ))}
+                  <div className="file-selection">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => onToggleFileSelection(file.id)}
+                      aria-label={`Selecionar ${file.name}`}
+                    />
+                  </div>
+
+                  <div className="file-info">
+                    <div className="file-meta">
+                      <div className="file-title-row">
+                        <span className="file-icon">{getFileIcon(file.name)}</span>
+                        <strong className="file-name-text">{file.name}</strong>
+                      </div>
+
+                      <div className="file-details-stack">
+                        <div className="file-size-line">
+                          {formatFileSize(file.size)}
+                        </div>
+
+                        <div className="file-date-line">
+                          enviado em {formatDate(file.createdAt)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="file-links-row">
+                      <button
+                        className="link-button"
+                        onClick={() => handlePreview(file)}
+                        disabled={loadingPreviewId === file.id}
+                      >
+                        {loadingPreviewId === file.id
+                          ? "Carregando..."
+                          : "Visualizar"}
+                      </button>
+
+                      <button
+                        className="link-button"
+                        onClick={() => handleOpenInNewTab(file)}
+                        disabled={loadingOpenId === file.id}
+                      >
+                        {loadingOpenId === file.id
+                          ? "Abrindo..."
+                          : "Abrir em nova aba"}
+                      </button>
+
+                      <button
+                        className={`link-button ${
+                          copiedShareId === file.id ? "link-button-success" : ""
+                        }`}
+                        onClick={() => handleShare(file)}
+                        disabled={loadingShareId === file.id}
+                      >
+                        {loadingShareId === file.id
+                          ? "Copiando..."
+                          : copiedShareId === file.id
+                          ? "Copiado"
+                          : "Compartilhar"}
+                      </button>
+
+                      <button
+                        className="link-button"
+                        onClick={() => onEditFile(file)}
+                      >
+                        Renomear
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    className="danger-button small file-delete-button"
+                    onClick={() => onDeleteFile(file)}
+                  >
+                    Excluir
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

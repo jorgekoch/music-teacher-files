@@ -35,9 +35,11 @@ export function DashboardPage() {
   const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
   const [folderToEdit, setFolderToEdit] = useState<Folder | null>(null);
   const [fileToDelete, setFileToDelete] = useState<FileItem | null>(null);
+  const [filesToDelete, setFilesToDelete] = useState<FileItem[]>([]);
   const [fileToEdit, setFileToEdit] = useState<FileItem | null>(null);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [selectedFileIds, setSelectedFileIds] = useState<number[]>([]);
 
   const selectedFolder = useMemo(
     () => folders.find((folder) => folder.id === selectedFolderId) || null,
@@ -133,6 +135,7 @@ export function DashboardPage() {
       setLoadingFiles(true);
       const response = await api.get<FileItem[]>(`/files/folder/${folderId}`);
       setFiles(response.data);
+      setSelectedFileIds([]);
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao carregar arquivos");
     } finally {
@@ -143,6 +146,7 @@ export function DashboardPage() {
   function handleSelectFolder(folderId: number) {
     setSelectedFolderId(folderId);
     saveSelectedFolderId(folderId);
+    setSelectedFileIds([]);
   }
 
   function handleStartOnboarding() {
@@ -150,6 +154,27 @@ export function DashboardPage() {
       behavior: "smooth",
       block: "start",
     });
+  }
+
+  function handleToggleFileSelection(fileId: number) {
+    setSelectedFileIds((current) =>
+      current.includes(fileId)
+        ? current.filter((id) => id !== fileId)
+        : [...current, fileId]
+    );
+  }
+
+  function handleSelectAllFiles(fileIds: number[]) {
+    setSelectedFileIds(fileIds);
+  }
+
+  function handleClearFileSelection() {
+    setSelectedFileIds([]);
+  }
+
+  function handleDeleteSelectedFiles(selectedFiles: FileItem[]) {
+    if (selectedFiles.length === 0) return;
+    setFilesToDelete(selectedFiles);
   }
 
   useEffect(() => {
@@ -310,6 +335,28 @@ export function DashboardPage() {
     }
   }
 
+  async function confirmDeleteSelectedFiles() {
+    if (filesToDelete.length === 0 || !selectedFolderId) return;
+
+    try {
+      await Promise.all(filesToDelete.map((file) => api.delete(`/files/${file.id}`)));
+
+      toast.success(
+        filesToDelete.length === 1
+          ? "Arquivo excluído com sucesso."
+          : `${filesToDelete.length} arquivos excluídos com sucesso.`
+      );
+
+      setFilesToDelete([]);
+      setSelectedFileIds([]);
+      await fetchFiles(selectedFolderId);
+      await fetchProfile();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Erro ao excluir arquivos");
+      setFilesToDelete([]);
+    }
+  }
+
   async function handleUpdateProfile(name: string) {
     try {
       const response = await api.patch<Profile>("/profile", { name });
@@ -379,6 +426,11 @@ export function DashboardPage() {
           onUpload={handleUpload}
           onEditFile={setFileToEdit}
           onDeleteFile={setFileToDelete}
+          selectedFileIds={selectedFileIds}
+          onToggleFileSelection={handleToggleFileSelection}
+          onSelectAllFiles={handleSelectAllFiles}
+          onClearFileSelection={handleClearFileSelection}
+          onDeleteSelectedFiles={handleDeleteSelectedFiles}
         />
       </div>
 
@@ -412,6 +464,15 @@ export function DashboardPage() {
         confirmText="Excluir arquivo"
         onCancel={() => setFileToDelete(null)}
         onConfirm={confirmDeleteFile}
+      />
+
+      <ConfirmDialog
+        open={filesToDelete.length > 0}
+        title="Excluir arquivos selecionados"
+        description={`Tem certeza que deseja excluir ${filesToDelete.length} arquivo(s) selecionado(s)?`}
+        confirmText="Excluir arquivos"
+        onCancel={() => setFilesToDelete([])}
+        onConfirm={confirmDeleteSelectedFiles}
       />
 
       <ProfileDialog
