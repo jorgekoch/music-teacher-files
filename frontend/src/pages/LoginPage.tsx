@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
+import { BrandLogo } from "../components/BrandLogo";
 
 export function LoginPage() {
   const { login, isAuthenticated, isAuthLoading } = useAuth();
@@ -38,51 +39,79 @@ export function LoginPage() {
 
   return (
     <div className="auth-page">
-      <div className="auth-card card">
-        <p className="eyebrow">Arquivapp</p>
-        <h1>Entrar</h1>
-        <p className="muted">Acesse seu acervo privado.</p>
+      <div className="auth-shell">
+        <section className="auth-panel auth-panel--brand">
+          <div className="auth-brand-content">
+            <BrandLogo variant="public" />
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <input
-            className="input"
-            type="email"
-            placeholder="E-mail"
-            value={form.email}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, email: e.target.value }))
-            }
-          />
+            <p className="auth-eyebrow">Arquivapp</p>
 
-          <input
-            className="input"
-            type="password"
-            placeholder="Senha"
-            value={form.password}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, password: e.target.value }))
-            }
-          />
+            <h1 className="auth-brand-title">
+              Organize seus arquivos com mais simplicidade e segurança.
+            </h1>
 
-          {error && <p className="feedback-inline-error">{error}</p>}
+            <p className="auth-brand-description">
+              Guarde, organize e acesse seus arquivos em um espaço privado na
+              nuvem, com praticidade no dia a dia.
+            </p>
+          </div>
+        </section>
 
-          <button className="primary-button full-width" disabled={loading}>
-            {loading ? "Entrando e preparando seu painel..." : "Entrar"}
-          </button>
-        </form>
+        <section className="auth-panel auth-panel--form">
+          <div className="auth-card card">
+            <div className="auth-header">
+              <BrandLogo variant="dashboard" />
+            </div>
 
-        <p className="auth-link-text">
-          <Link to="/forgot-password" className="auth-link-highlight">
-            Esqueci minha senha
-          </Link>
-        </p>
+            <h1 className="auth-title">Entrar</h1>
+            <p className="muted auth-subtitle">Acesse seu acervo privado.</p>
 
-        <p className="muted auth-link-text">
-          Não possui conta?{" "}
-          <Link to="/register" className="auth-link-highlight">
-            Criar usuário
-          </Link>
-        </p>
+            <form className="auth-form" onSubmit={handleSubmit}>
+              <input
+                className="input"
+                type="email"
+                placeholder="E-mail"
+                value={form.email}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, email: e.target.value }))
+                }
+              />
+
+              <input
+                className="input"
+                type="password"
+                placeholder="Senha"
+                value={form.password}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, password: e.target.value }))
+                }
+              />
+
+              {error && <p className="feedback-inline-error">{error}</p>}
+
+              <button className="primary-button full-width" disabled={loading}>
+                {loading ? "Entrando e preparando seu painel..." : "Entrar"}
+              </button>
+            </form>
+
+            <p className="auth-link-text">
+              <Link to="/forgot-password" className="auth-link-highlight">
+                Esqueci minha senha
+              </Link>
+            </p>
+
+            <p className="muted auth-link-text">
+              Não possui conta?{" "}
+              <Link to="/register" className="auth-link-highlight">
+                Criar usuário
+              </Link>
+            </p>
+
+            <Link to="/" className="auth-back-link">
+              ← Voltar para a página inicial
+            </Link>
+          </div>
+        </section>
       </div>
     </div>
   );
