@@ -808,3 +808,88 @@
   font-size: 13px;
   color: var(--text-muted);
 }
+
+/* FILE PANEL */
+.file-panel-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.view-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-secondary);
+}
+
+.view-mode-button {
+  background: transparent;
+  color: var(--text-muted);
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.view-mode-button-active {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 10px var(--shadow);
+}
+
+.file-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.file-item-grid {
+  grid-template-columns: 28px 1fr;
+  grid-template-areas:
+    "selection delete"
+    "info info";
+  align-items: start;
+}
+
+.file-item-grid .file-selection {
+  grid-area: selection;
+  justify-content: flex-start;
+}
+
+.file-item-grid .file-info {
+  grid-area: info;
+}
+
+.file-item-grid .file-delete-button {
+  grid-area: delete;
+  justify-self: end;
+}
+
+.file-item-grid .file-links-row {
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  .file-panel-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .view-mode-toggle {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .view-mode-button {
+    flex: 1;
+  }
+
+  .file-list-grid {
+    grid-template-columns: 1fr;
+  }
+}

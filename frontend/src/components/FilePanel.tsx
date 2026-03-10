@@ -29,6 +29,8 @@ type SortOption =
   | "size-desc"
   | "size-asc";
 
+type ViewMode = "list" | "grid";
+
 export function FilePanel({
   selectedFolder,
   files,
@@ -44,6 +46,7 @@ export function FilePanel({
 }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loadingPreviewId, setLoadingPreviewId] = useState<number | null>(null);
@@ -245,21 +248,45 @@ export function FilePanel({
             </p>
           </div>
 
-          <div className="file-sort-compact">
-            <span className="file-sort-label">Ordenação</span>
+          <div className="file-panel-controls">
+            <div className="view-mode-toggle">
+              <button
+                type="button"
+                className={`view-mode-button ${
+                  viewMode === "list" ? "view-mode-button-active" : ""
+                }`}
+                onClick={() => setViewMode("list")}
+              >
+                Lista
+              </button>
 
-            <select
-              className="file-sort-compact__select"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-            >
-              <option value="newest">Recentes</option>
-              <option value="oldest">Antigos</option>
-              <option value="name-asc">Nome A-Z</option>
-              <option value="name-desc">Nome Z-A</option>
-              <option value="size-desc">Maior tamanho</option>
-              <option value="size-asc">Menor tamanho</option>
-            </select>
+              <button
+                type="button"
+                className={`view-mode-button ${
+                  viewMode === "grid" ? "view-mode-button-active" : ""
+                }`}
+                onClick={() => setViewMode("grid")}
+              >
+                Grade
+              </button>
+            </div>
+
+            <div className="file-sort-compact">
+              <span className="file-sort-label">Ordenação</span>
+
+              <select
+                className="file-sort-compact__select"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+              >
+                <option value="newest">Recentes</option>
+                <option value="oldest">Antigos</option>
+                <option value="name-asc">Nome A-Z</option>
+                <option value="name-desc">Nome Z-A</option>
+                <option value="size-desc">Maior tamanho</option>
+                <option value="size-asc">Menor tamanho</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -319,7 +346,11 @@ export function FilePanel({
             }
           />
         ) : (
-          <div className="file-list mobile-file-list">
+          <div
+            className={`file-list mobile-file-list ${
+              viewMode === "grid" ? "file-list-grid" : ""
+            }`}
+          >
             {sortedFiles.map((file) => {
               const isSelected = selectedFileIds.includes(file.id);
 
@@ -328,7 +359,7 @@ export function FilePanel({
                   key={file.id}
                   className={`file-item mobile-file-item ${
                     isSelected ? "file-item-selected" : ""
-                  }`}
+                  } ${viewMode === "grid" ? "file-item-grid" : ""}`}
                 >
                   <div className="file-selection">
                     <input
