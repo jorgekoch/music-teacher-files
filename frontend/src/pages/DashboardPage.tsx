@@ -17,6 +17,13 @@ import { useAuth } from "../hooks/useAuth";
 const SELECTED_FOLDER_STORAGE_KEY = "Arquivapp:selectedFolderId";
 const ONBOARDING_DISMISSED_STORAGE_KEY = "Arquivapp:onboardingDismissed";
 
+type DashboardInitResponse = {
+  profile: Profile;
+  folders: Folder[];
+  files: FileItem[];
+  selectedFolderId: number | null;
+};
+
 export function DashboardPage() {
   const { logout } = useAuth();
 
@@ -99,17 +106,17 @@ export function DashboardPage() {
         setSelectedFolderId(null);
         setFiles([]);
         saveSelectedFolderId(null);
-        return;
+        return null;
       }
 
       const storedSelectedFolderId = getStoredSelectedFolderId();
 
-      const folderStillExists = folderList.some(
+      const currentFolderStillExists = folderList.some(
         (folder) => folder.id === selectedFolderId
       );
 
-      if (selectedFolderId && folderStillExists) {
-        return;
+      if (selectedFolderId && currentFolderStillExists) {
+        return selectedFolderId;
       }
 
       const storedFolderStillExists = folderList.some(
@@ -119,13 +126,15 @@ export function DashboardPage() {
       if (storedSelectedFolderId && storedFolderStillExists) {
         setSelectedFolderId(storedSelectedFolderId);
         saveSelectedFolderId(storedSelectedFolderId);
-        return;
+        return storedSelectedFolderId;
       }
 
       setSelectedFolderId(folderList[0].id);
       saveSelectedFolderId(folderList[0].id);
+      return folderList[0].id;
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao carregar pastas");
+      return null;
     } finally {
       setLoadingFolders(false);
     }
@@ -144,10 +153,39 @@ export function DashboardPage() {
     }
   }
 
-  function handleSelectFolder(folderId: number) {
+  async function loadInitialDashboard() {
+    try {
+      setLoadingFolders(true);
+      setLoadingFiles(true);
+
+      const storedFolderId = getStoredSelectedFolderId();
+
+      const response = await api.get<DashboardInitResponse>("/dashboard/init", {
+        params: storedFolderId ? { folderId: storedFolderId } : {},
+      });
+
+      const data = response.data;
+
+      setProfile(data.profile);
+      setFolders(data.folders);
+      setFiles(data.files);
+      setSelectedFolderId(data.selectedFolderId);
+      setSelectedFileIds([]);
+
+      saveSelectedFolderId(data.selectedFolderId);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Erro ao carregar dashboard");
+    } finally {
+      setLoadingFolders(false);
+      setLoadingFiles(false);
+    }
+  }
+
+  async function handleSelectFolder(folderId: number) {
     setSelectedFolderId(folderId);
     saveSelectedFolderId(folderId);
     setSelectedFileIds([]);
+    await fetchFiles(folderId);
   }
 
   function handleStartOnboarding() {
@@ -179,21 +217,8 @@ export function DashboardPage() {
   }
 
   useEffect(() => {
-    const storedFolderId = getStoredSelectedFolderId();
-
-    if (storedFolderId) {
-      setSelectedFolderId(storedFolderId);
-    }
-
-    fetchProfile();
-    fetchFolders();
+    loadInitialDashboard();
   }, []);
-
-  useEffect(() => {
-    if (selectedFolderId) {
-      fetchFiles(selectedFolderId);
-    }
-  }, [selectedFolderId]);
 
   useEffect(() => {
     const hasFolders = folders.length > 0;
@@ -215,10 +240,11 @@ export function DashboardPage() {
 
       toast.success("Pasta criada com sucesso.");
       dismissOnboarding();
-      await fetchFolders();
 
+      await fetchFolders();
       setSelectedFolderId(createdFolder.id);
       saveSelectedFolderId(createdFolder.id);
+      await fetchFiles(createdFolder.id);
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao criar pasta");
     }
@@ -243,18 +269,27 @@ export function DashboardPage() {
 
     try {
       const deletedFolderId = folderToDelete.id;
+      const wasSelectedFolder = selectedFolderId === deletedFolderId;
 
       await api.delete(`/folders/${deletedFolderId}`);
       toast.success("Pasta excluída com sucesso.");
       setFolderToDelete(null);
 
-      if (selectedFolderId === deletedFolderId) {
+      if (wasSelectedFolder) {
         setSelectedFolderId(null);
         setFiles([]);
         saveSelectedFolderId(null);
       }
 
-      await fetchFolders();
+      const nextFolderId = await fetchFolders();
+
+      if (wasSelectedFolder) {
+        if (nextFolderId) {
+          await fetchFiles(nextFolderId);
+        } else {
+          setFiles([]);
+        }
+      }
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao excluir pasta");
       setFolderToDelete(null);
@@ -295,8 +330,7 @@ export function DashboardPage() {
       });
 
       dismissOnboarding();
-      await fetchFiles(selectedFolderId);
-      await fetchProfile();
+      await Promise.all([fetchFiles(selectedFolderId), fetchProfile()]);
     } catch (err: any) {
       const message =
         err?.response?.data?.error ||
@@ -333,9 +367,8 @@ export function DashboardPage() {
       setDraggingFileId(null);
       setSelectedFileIds([]);
 
-      await fetchFolders();
+      await Promise.all([fetchFolders(), fetchProfile()]);
       await fetchFiles(selectedFolderId);
-      await fetchProfile();
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao mover arquivo");
       setDraggingFileId(null);
@@ -349,8 +382,7 @@ export function DashboardPage() {
       await api.delete(`/files/${fileToDelete.id}`);
       toast.success("Arquivo excluído com sucesso.");
       setFileToDelete(null);
-      await fetchFiles(selectedFolderId);
-      await fetchProfile();
+      await Promise.all([fetchFiles(selectedFolderId), fetchProfile()]);
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao excluir arquivo");
       setFileToDelete(null);
@@ -373,8 +405,7 @@ export function DashboardPage() {
 
       setFilesToDelete([]);
       setSelectedFileIds([]);
-      await fetchFiles(selectedFolderId);
-      await fetchProfile();
+      await Promise.all([fetchFiles(selectedFolderId), fetchProfile()]);
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao excluir arquivos");
       setFilesToDelete([]);
