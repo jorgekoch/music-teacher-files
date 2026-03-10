@@ -8,13 +8,10 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
+import { SharedFilePage } from "./pages/SharedFilePage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 
 export default function App() {
-
-  console.log("ENV MODE:", import.meta.env.MODE);
-  console.log("API URL:", import.meta.env.VITE_API_URL);
-  
   return (
     <ThemeProvider>
       <AuthProvider>
@@ -36,6 +33,7 @@ export default function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/shared/:token" element={<SharedFilePage />} />
             <Route
               path="/dashboard"
               element={

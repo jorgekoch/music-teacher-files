@@ -9,6 +9,7 @@ import "./styles/auth.css";
 import "./styles/landing.css";
 import "./styles/app.css";
 import "./styles/dialogs.css";
+import "./styles/shared.css";
 import "./styles/responsive.css";
 import "react-loading-skeleton/dist/skeleton.css";
 
