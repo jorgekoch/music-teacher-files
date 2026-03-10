@@ -1,0 +1,30 @@
+.brand-logo-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  line-height: 0;
+}
+
+.brand-logo {
+  display: block;
+  width: auto;
+  object-fit: contain;
+}
+
+.brand-logo--dashboard {
+  height: 72px;
+}
+
+.brand-logo--public {
+  height: 80px;
+}
+
+@media (max-width: 768px) {
+  .brand-logo--dashboard {
+    height: 56px;
+  }
+
+  .brand-logo--public {
+    height: 64px;
+  }
+}

@@ -1,46 +1,80 @@
 :root {
-  --bg: #f6f7fb;
-  --bg-secondary: #fcfcfd;
-  --text: #101828;
-  --text-muted: #667085;
+  /* BASE */
+  --bg: #f8fafc;
+  --bg-secondary: #f1f5f9;
   --card: #ffffff;
-  --border: #eaecf0;
-  --border-strong: #d0d5dd;
-  --shadow: rgba(16, 24, 40, 0.06);
-  --shadow-strong: rgba(16, 24, 40, 0.12);
-  --primary: #101828;
+
+  /* TEXT */
+  --text: #0f172a;
+  --text-muted: #64748b;
+
+  /* BORDERS */
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* BRAND */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
   --primary-text: #ffffff;
-  --accent: #b42318;
-  --danger-bg: #fef3f2;
-  --danger-text: #b42318;
+
+  /* ACCENT / ACTION */
+  --accent: #2563eb;
+
+  /* STATUS */
+  --danger-bg: #fef2f2;
+  --danger-text: #dc2626;
+
   --success-bg: #ecfdf3;
   --success-text: #027a48;
-  --overlay: rgba(16, 24, 40, 0.35);
+
+  /* EFFECTS */
+  --shadow: rgba(15, 23, 42, 0.08);
+  --shadow-strong: rgba(15, 23, 42, 0.16);
+  --overlay: rgba(15, 23, 42, 0.4);
+
+  /* SKELETON */
   --skeleton-base: #e5e7eb;
-  --skeleton-highlight: #f3f4f6;
+  --skeleton-highlight: #f8fafc;
 
   font-family: Inter, system-ui, Arial, sans-serif;
   line-height: 1.5;
 }
 
 [data-theme="dark"] {
-  --bg: #0f1720;
-  --bg-secondary: #111b26;
+  /* BASE */
+  --bg: #0f172a;
+  --bg-secondary: #111827;
+  --card: #1e293b;
+
+  /* TEXT */
   --text: #f8fafc;
   --text-muted: #94a3b8;
-  --card: #16212d;
-  --border: #233243;
-  --border-strong: #314458;
+
+  /* BORDERS */
+  --border: #334155;
+  --border-strong: #475569;
+
+  /* BRAND */
+  --primary: #60a5fa;
+  --primary-hover: #3b82f6;
+  --primary-text: #0f172a;
+
+  /* ACCENT / ACTION */
+  --accent: #60a5fa;
+
+  /* STATUS */
+  --danger-bg: rgba(239, 68, 68, 0.14);
+  --danger-text: #fca5a5;
+
+  --success-bg: rgba(34, 197, 94, 0.14);
+  --success-text: #86efac;
+
+  /* EFFECTS */
   --shadow: rgba(2, 6, 23, 0.35);
   --shadow-strong: rgba(2, 6, 23, 0.5);
-  --primary: #f8fafc;
-  --primary-text: #0f1720;
-  --accent: #f97066;
-  --danger-bg: rgba(249, 112, 102, 0.12);
-  --danger-text: #fda29b;
-  --success-bg: rgba(18, 183, 106, 0.14);
-  --success-text: #6ce9a6;
-  --overlay: rgba(2, 6, 23, 0.6);
-  --skeleton-base: #223140;
-  --skeleton-highlight: #314458;
+  --overlay: rgba(2, 6, 23, 0.7);
+
+  /* SKELETON */
+  --skeleton-base: #1e293b;
+  --skeleton-highlight: #334155;
 }

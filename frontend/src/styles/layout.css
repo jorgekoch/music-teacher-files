@@ -39,7 +39,16 @@
 }
 
 .app-topbar {
-  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 18px 28px;
+
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+
+  backdrop-filter: blur(6px);
 }
 
 .topbar-texts {

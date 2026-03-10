@@ -1,6 +1,7 @@
 import type { Profile } from "../types";
 import { UserMenu } from "./UserMenu";
 import { SupportWidget } from "./SupportWidget";
+import { BrandLogo } from "./BrandLogo";
 
 type Props = {
   children: React.ReactNode;
@@ -13,14 +14,8 @@ export function Layout({ children, profile, onProfileClick, onLogout }: Props) {
   return (
     <div className="app-shell">
       <header className="topbar app-topbar">
-        <div className="topbar-texts">
-          <p className="eyebrow">Arquivapp</p>
-          <h1 className="brand">Arquivapp</h1>
-          <p className="subtitle mobile-friendly-subtitle">
-            {profile
-              ? `Bem-vindo, ${profile.name}`
-              : "Carregando seu espaço de arquivos..."}
-          </p>
+        <div className="topbar-brand">
+          <BrandLogo variant="dashboard" />
         </div>
 
         <UserMenu

@@ -13,6 +13,7 @@ body,
 body {
   background: var(--bg);
   color: var(--text);
+  font-family: "Inter", system-ui, sans-serif;
 }
 
 button,
@@ -24,6 +25,11 @@ textarea {
 button {
   cursor: pointer;
   border: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
 }
 
 a {

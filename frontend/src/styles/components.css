@@ -32,11 +32,13 @@
 
 .card {
   background: var(--card);
+
   border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: 0 12px 30px var(--shadow);
-  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 18px;
+
+  box-shadow: 0 8px 24px var(--shadow);
+
+  padding: 18px;
 }
 
 .mobile-section-card {
