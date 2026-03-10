@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { api } from "../services/api";
 import type { FileItem, Folder } from "../types";
@@ -30,6 +30,9 @@ export function FilePanel({
   const [loadingPreviewId, setLoadingPreviewId] = useState<number | null>(null);
   const [loadingOpenId, setLoadingOpenId] = useState<number | null>(null);
   const [loadingShareId, setLoadingShareId] = useState<number | null>(null);
+  const [copiedShareId, setCopiedShareId] = useState<number | null>(null);
+  const [lastSharedUrl, setLastSharedUrl] = useState<string | null>(null);
+  const [lastSharedFileName, setLastSharedFileName] = useState<string | null>(null);
 
   const filteredFiles = useMemo(() => {
     const normalized = search.trim().toLowerCase();
@@ -40,6 +43,16 @@ export function FilePanel({
       file.name.toLowerCase().includes(normalized)
     );
   }, [files, search]);
+
+  useEffect(() => {
+    if (!copiedShareId) return;
+
+    const timeout = window.setTimeout(() => {
+      setCopiedShareId(null);
+    }, 2200);
+
+    return () => window.clearTimeout(timeout);
+  }, [copiedShareId]);
 
   async function getTemporaryFileUrl(fileId: number) {
     const response = await api.get<{ url: string }>(`/files/${fileId}/download`);
@@ -74,14 +87,30 @@ export function FilePanel({
   async function handleShare(file: FileItem) {
     try {
       setLoadingShareId(file.id);
-      const response = await api.post<{ shareUrl: string }>(`/shared/${file.id}/share`);
-      await navigator.clipboard.writeText(response.data.shareUrl);
+
+      const response = await api.post<{ shareUrl: string }>(
+        `/shared/${file.id}/share`
+      );
+
+      const shareUrl = response.data.shareUrl;
+
+      await navigator.clipboard.writeText(shareUrl);
+
+      setCopiedShareId(file.id);
+      setLastSharedUrl(shareUrl);
+      setLastSharedFileName(file.name);
+
       toast.success("Link de compartilhamento copiado.");
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao compartilhar arquivo");
     } finally {
       setLoadingShareId(null);
     }
+  }
+
+  function handleOpenSharedLink() {
+    if (!lastSharedUrl) return;
+    window.open(lastSharedUrl, "_blank", "noopener,noreferrer");
   }
 
   function handleClosePreview() {
@@ -102,8 +131,7 @@ export function FilePanel({
   }
 
   const isFolderEmpty = files.length === 0;
-  const hasSearch = search.trim().length > 0;
-  const hasNoSearchResults = !isFolderEmpty && filteredFiles.length === 0;
+  const hasNoSearchResults = files.length > 0 && filteredFiles.length === 0;
 
   return (
     <>
@@ -118,6 +146,24 @@ export function FilePanel({
         </div>
 
         <UploadFileForm disabled={!selectedFolder} onUpload={onUpload} />
+
+        {lastSharedUrl && lastSharedFileName && (
+          <div className="share-feedback-banner">
+            <div>
+              <strong>Link copiado com sucesso</strong>
+              <p className="muted">
+                Arquivo compartilhado: {lastSharedFileName}
+              </p>
+            </div>
+
+            <button
+              className="ghost-button small"
+              onClick={handleOpenSharedLink}
+            >
+              Abrir link
+            </button>
+          </div>
+        )}
 
         <div className="file-toolbar">
           <input
@@ -168,11 +214,17 @@ export function FilePanel({
                     </button>
 
                     <button
-                      className="link-button"
+                      className={`link-button ${
+                        copiedShareId === file.id ? "link-button-success" : ""
+                      }`}
                       onClick={() => handleShare(file)}
                       disabled={loadingShareId === file.id}
                     >
-                      {loadingShareId === file.id ? "Copiando..." : "Compartilhar"}
+                      {loadingShareId === file.id
+                        ? "Copiando..."
+                        : copiedShareId === file.id
+                        ? "Copiado"
+                        : "Compartilhar"}
                     </button>
 
                     <button

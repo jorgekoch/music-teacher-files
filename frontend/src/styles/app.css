@@ -588,3 +588,41 @@
   font-weight: 600;
   color: var(--text-muted);
 }
+
+/* SHARE FEEDBACK */
+.link-button-success {
+  color: #027a48;
+}
+
+.share-feedback-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid #abefc6;
+  border-radius: 16px;
+  background: var(--success-bg);
+}
+
+.share-feedback-banner strong {
+  display: block;
+  color: var(--success-text);
+  margin-bottom: 4px;
+}
+
+.share-feedback-banner p {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .share-feedback-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .share-feedback-banner .ghost-button {
+    width: 100%;
+  }
+}
