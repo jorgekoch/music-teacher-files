@@ -15,6 +15,7 @@ const ACCEPTED_TYPES = [
   "audio/ogg",
   "image/jpeg",
   "image/png",
+  "image/gif",
   "text/plain",
   "text/markdown",
   "text/csv",
@@ -35,6 +36,42 @@ const ACCEPTED_TYPES = [
   // Excel
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "application/vnd.ms-excel",
+
+  // Compactados
+  "application/zip",
+  "application/x-zip-compressed",
+  "application/vnd.rar",
+  "application/x-rar-compressed",
+  "application/x-7z-compressed",
+];
+
+const ALLOWED_EXTENSIONS = [
+  "pdf",
+  "mp3",
+  "wav",
+  "ogg",
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "txt",
+  "md",
+  "markdown",
+  "csv",
+  "json",
+  "js",
+  "ts",
+  "html",
+  "css",
+  "mp4",
+  "webm",
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "zip",
+  "rar",
+  "7z",
 ];
 
 const FREE_MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
@@ -60,7 +97,12 @@ export function UploadFileForm({
   const maxFileSizeLabel = isPro ? "500 MB" : "50 MB";
 
   function validateFile(file: File) {
-    if (!ACCEPTED_TYPES.includes(file.type)) {
+    const extension = file.name.split(".").pop()?.toLowerCase() || "";
+
+    const isMimeAllowed = ACCEPTED_TYPES.includes(file.type);
+    const isExtensionAllowed = ALLOWED_EXTENSIONS.includes(extension);
+
+    if (!isMimeAllowed && !isExtensionAllowed) {
       toast.error(`Tipo de arquivo não permitido: ${file.name}`);
       return false;
     }
@@ -238,7 +280,7 @@ export function UploadFileForm({
         type="file"
         hidden
         multiple
-        accept=".pdf,.mp3,.wav,.ogg,.jpg,.jpeg,.png,.txt,.md,.csv,.json,.js,.ts,.html,.css,.mp4,.webm,.doc,.docx,.xls,.xlsx"
+        accept=".pdf,.mp3,.wav,.ogg,.jpg,.jpeg,.png,.gif,.txt,.md,.csv,.json,.js,.ts,.html,.css,.mp4,.webm,.doc,.docx,.xls,.xlsx,.zip,.rar,.7z"
         onChange={handleInputChange}
       />
 
@@ -263,7 +305,7 @@ export function UploadFileForm({
           <p className="muted upload-dropzone-subtitle">
             {uploadSuccess || loading
               ? uploadingFileName
-              : `Limite por arquivo: ${maxFileSizeLabel}. Formatos aceitos: PDF, áudio, imagem, vídeo, texto, CSV, DOC, DOCX, XLS e XLSX`}
+              : `Limite por arquivo: ${maxFileSizeLabel}. Formatos aceitos: PDF, áudio, imagem, vídeo, texto, CSV, DOC, DOCX, XLS, XLSX, ZIP, RAR e 7Z`}
           </p>
 
           {(loading || uploadSuccess) && (

@@ -42,7 +42,8 @@ type TextPreviewState =
 
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "svg"];
 const AUDIO_EXTENSIONS = ["mp3", "wav", "ogg", "m4a"];
-const VIDEO_EXTENSIONS = ["mp4", "webm", "ogg", "mov"];
+const ARCHIVE_EXTENSIONS = ["zip", "rar", "7z"];
+const VIDEO_EXTENSIONS = ["mp4", "webm", "mov"];
 const TEXT_EXTENSIONS = ["txt"];
 const MARKDOWN_EXTENSIONS = ["md", "markdown"];
 const CSV_EXTENSIONS = ["csv"];
@@ -112,6 +113,10 @@ function getLanguageLabel(extension: string) {
     xlsx: "Excel",
     docx: "Word",
     doc: "Word legado",
+    gif: "GIF",
+    zip: "ZIP",
+    rar: "RAR",
+    "7z": "7Z",
   };
 
   return labels[extension] || extension.toUpperCase();
@@ -406,6 +411,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
     if (extension === "pdf") return "pdf";
     if (IMAGE_EXTENSIONS.includes(extension)) return "image";
     if (AUDIO_EXTENSIONS.includes(extension)) return "audio";
+    if (ARCHIVE_EXTENSIONS.includes(extension)) return "archive";
     if (VIDEO_EXTENSIONS.includes(extension)) return "video";
     if (TEXT_EXTENSIONS.includes(extension)) return "text";
     if (MARKDOWN_EXTENSIONS.includes(extension)) return "markdown";
@@ -829,6 +835,19 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
           <pre className="text-preview-content">
             <code>{textPreview.content}</code>
           </pre>
+        </div>
+      );
+    }
+
+    if (previewType === "archive") {
+      return (
+        <div className="empty-state">
+          <div className="empty-state-emoji">📦</div>
+          <h3>Arquivo compactado</h3>
+          <p>
+            Arquivos ZIP e RAR não possuem visualização embutida. Você pode abrir em
+            nova aba ou baixar o arquivo para extrair o conteúdo.
+          </p>
         </div>
       );
     }
