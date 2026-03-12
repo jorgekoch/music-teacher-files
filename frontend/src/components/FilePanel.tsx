@@ -149,6 +149,7 @@ export function FilePanel({
         return "📘";
       case "xls":
       case "xlsx":
+      case "csv":
         return "📊";
       case "ppt":
       case "pptx":
@@ -158,18 +159,36 @@ export function FilePanel({
       case "png":
       case "gif":
       case "webp":
+      case "svg":
         return "🖼";
       case "mp3":
       case "wav":
+      case "ogg":
+      case "m4a":
         return "🎵";
+      case "mp4":
+      case "webm":
+      case "mov":
+        return "🎬";
       case "zip":
       case "rar":
       case "7z":
         return "📦";
       case "txt":
+      case "md":
+      case "json":
+      case "js":
+      case "ts":
+      case "jsx":
+      case "tsx":
+      case "html":
+      case "css":
+      case "py":
+      case "java":
+      case "sql":
         return "📝";
       default:
-        return "📄";
+        return "📁";
     }
   }
 

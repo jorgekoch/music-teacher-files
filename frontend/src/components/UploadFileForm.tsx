@@ -27,8 +27,14 @@ const ACCEPTED_TYPES = [
   "video/mp4",
   "video/webm",
   "video/ogg",
+
+  // Word
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/msword",
+
+  // Excel
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
 ];
 
 const FREE_MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
@@ -232,7 +238,7 @@ export function UploadFileForm({
         type="file"
         hidden
         multiple
-        accept=".pdf,.mp3,.wav,.ogg,.jpg,.jpeg,.png,.txt,.md,.csv,.json,.js,.ts,.html,.css,.mp4,.webm,.doc,.docx"
+        accept=".pdf,.mp3,.wav,.ogg,.jpg,.jpeg,.png,.txt,.md,.csv,.json,.js,.ts,.html,.css,.mp4,.webm,.doc,.docx,.xls,.xlsx"
         onChange={handleInputChange}
       />
 
@@ -257,7 +263,7 @@ export function UploadFileForm({
           <p className="muted upload-dropzone-subtitle">
             {uploadSuccess || loading
               ? uploadingFileName
-              : `Limite por arquivo: ${maxFileSizeLabel}. Formatos aceitos: PDF, áudio, imagem, vídeo, texto, CSV, DOC e DOCX`}
+              : `Limite por arquivo: ${maxFileSizeLabel}. Formatos aceitos: PDF, áudio, imagem, vídeo, texto, CSV, DOC, DOCX, XLS e XLSX`}
           </p>
 
           {(loading || uploadSuccess) && (

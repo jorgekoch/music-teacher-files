@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import mammoth from "mammoth";
+import * as XLSX from "xlsx";
 import type { FileItem } from "../types";
 
 type Props = {
@@ -10,10 +11,34 @@ type Props = {
 };
 
 type TextPreviewState =
-  | { status: "idle"; content: ""; rows: string[][]; html: "" }
-  | { status: "loading"; content: ""; rows: string[][]; html: "" }
-  | { status: "success"; content: string; rows: string[][]; html: string }
-  | { status: "error"; content: ""; rows: string[][]; html: "" };
+  | {
+      status: "idle";
+      content: "";
+      rows: string[][];
+      html: "";
+      excelSheetName: "";
+    }
+  | {
+      status: "loading";
+      content: "";
+      rows: string[][];
+      html: "";
+      excelSheetName: "";
+    }
+  | {
+      status: "success";
+      content: string;
+      rows: string[][];
+      html: string;
+      excelSheetName: string;
+    }
+  | {
+      status: "error";
+      content: "";
+      rows: string[][];
+      html: "";
+      excelSheetName: "";
+    };
 
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "svg"];
 const AUDIO_EXTENSIONS = ["mp3", "wav", "ogg", "m4a"];
@@ -21,6 +46,7 @@ const VIDEO_EXTENSIONS = ["mp4", "webm", "ogg", "mov"];
 const TEXT_EXTENSIONS = ["txt"];
 const MARKDOWN_EXTENSIONS = ["md", "markdown"];
 const CSV_EXTENSIONS = ["csv"];
+const EXCEL_EXTENSIONS = ["xls", "xlsx"];
 const DOCX_EXTENSIONS = ["docx"];
 const LEGACY_WORD_EXTENSIONS = ["doc"];
 const CODE_EXTENSIONS = [
@@ -82,6 +108,8 @@ function getLanguageLabel(extension: string) {
     md: "Markdown",
     markdown: "Markdown",
     csv: "CSV",
+    xls: "Excel",
+    xlsx: "Excel",
     docx: "Word",
     doc: "Word legado",
   };
@@ -199,11 +227,33 @@ function highlightCode(content: string, extension: string) {
   let html = escaped;
 
   if (
-    ["js", "ts", "jsx", "tsx", "java", "c", "cpp", "cs", "php", "go", "rs", "sql", "css", "scss", "sass"].includes(extension)
+    [
+      "js",
+      "ts",
+      "jsx",
+      "tsx",
+      "java",
+      "c",
+      "cpp",
+      "cs",
+      "php",
+      "go",
+      "rs",
+      "sql",
+      "css",
+      "scss",
+      "sass",
+    ].includes(extension)
   ) {
-    html = html.replace(/(\/\/.*$)/gm, (match) => store(match, "token-comment"));
-    html = html.replace(/(\/\*[\s\S]*?\*\/)/g, (match) => store(match, "token-comment"));
-    html = html.replace(/(--.*$)/gm, (match) => store(match, "token-comment"));
+    html = html.replace(/(\/\/.*$)/gm, (match) =>
+      store(match, "token-comment")
+    );
+    html = html.replace(/(\/\*[\s\S]*?\*\/)/g, (match) =>
+      store(match, "token-comment")
+    );
+    html = html.replace(/(--.*$)/gm, (match) =>
+      store(match, "token-comment")
+    );
   }
 
   if (["py", "sh", "bash", "yml", "yaml"].includes(extension)) {
@@ -231,15 +281,71 @@ function highlightCode(content: string, extension: string) {
   );
 
   const keywords = [
-    "const", "let", "var", "function", "return", "if", "else", "switch",
-    "case", "break", "default", "for", "while", "do", "try", "catch",
-    "finally", "throw", "class", "extends", "implements", "interface",
-    "type", "import", "export", "from", "async", "await", "new", "null",
-    "undefined", "true", "false", "public", "private", "protected",
-    "static", "void", "this", "super", "typeof", "instanceof", "in", "of",
-    "def", "lambda", "raise", "except", "elif", "with", "as",
-    "SELECT", "FROM", "WHERE", "INSERT", "UPDATE", "DELETE", "JOIN",
-    "LEFT", "RIGHT", "INNER", "OUTER", "CREATE", "TABLE", "VALUES",
+    "const",
+    "let",
+    "var",
+    "function",
+    "return",
+    "if",
+    "else",
+    "switch",
+    "case",
+    "break",
+    "default",
+    "for",
+    "while",
+    "do",
+    "try",
+    "catch",
+    "finally",
+    "throw",
+    "class",
+    "extends",
+    "implements",
+    "interface",
+    "type",
+    "import",
+    "export",
+    "from",
+    "async",
+    "await",
+    "new",
+    "null",
+    "undefined",
+    "true",
+    "false",
+    "public",
+    "private",
+    "protected",
+    "static",
+    "void",
+    "this",
+    "super",
+    "typeof",
+    "instanceof",
+    "in",
+    "of",
+    "def",
+    "lambda",
+    "raise",
+    "except",
+    "elif",
+    "with",
+    "as",
+    "SELECT",
+    "FROM",
+    "WHERE",
+    "INSERT",
+    "UPDATE",
+    "DELETE",
+    "JOIN",
+    "LEFT",
+    "RIGHT",
+    "INNER",
+    "OUTER",
+    "CREATE",
+    "TABLE",
+    "VALUES",
   ];
 
   const keywordRegex = new RegExp(`\\b(${keywords.join("|")})\\b`, "g");
@@ -249,18 +355,36 @@ function highlightCode(content: string, extension: string) {
   );
 
   if (["html", "xml"].includes(extension)) {
-    html = html.replace(/(&lt;\/?[a-zA-Z0-9:-]+)(.*?)(\/?&gt;)/g, (_, start, attrs, end) => {
-      return `${store(start, "token-tag")}${attrs}${store(end, "token-tag")}`;
-    });
+    html = html.replace(
+      /(&lt;\/?[a-zA-Z0-9:-]+)(.*?)(\/?&gt;)/g,
+      (_, start, attrs, end) => {
+        return `${store(start, "token-tag")}${attrs}${store(
+          end,
+          "token-tag"
+        )}`;
+      }
+    );
 
     html = html.replace(/(\s[a-zA-Z-:]+)(=)/g, (_, attr, equal) => {
       return `${store(attr, "token-attr")}${equal}`;
     });
   }
 
-  html = html.replace(/__TOKEN_(\d+)__/g, (_, index) => placeholders[Number(index)]);
+  html = html.replace(/__TOKEN_(\d+)__/g, (_, index) => {
+    return placeholders[Number(index)];
+  });
 
   return html;
+}
+
+function normalizeSheetRows(rows: unknown[][], maxRows = 50, maxCols = 20) {
+  return rows.slice(0, maxRows).map((row) =>
+    row.slice(0, maxCols).map((cell) => {
+      if (cell === null || cell === undefined) return "";
+      if (cell instanceof Date) return cell.toLocaleDateString("pt-BR");
+      return String(cell);
+    })
+  );
 }
 
 export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
@@ -269,6 +393,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
     content: "",
     rows: [],
     html: "",
+    excelSheetName: "",
   });
 
   const extension = useMemo(() => {
@@ -285,6 +410,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
     if (TEXT_EXTENSIONS.includes(extension)) return "text";
     if (MARKDOWN_EXTENSIONS.includes(extension)) return "markdown";
     if (CSV_EXTENSIONS.includes(extension)) return "csv";
+    if (EXCEL_EXTENSIONS.includes(extension)) return "excel";
     if (DOCX_EXTENSIONS.includes(extension)) return "docx";
     if (LEGACY_WORD_EXTENSIONS.includes(extension)) return "doc";
     if (CODE_EXTENSIONS.includes(extension)) return "code";
@@ -298,6 +424,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
         content: "",
         rows: [],
         html: "",
+        excelSheetName: "",
       });
       return;
     }
@@ -308,6 +435,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
       previewType === "text" ||
       previewType === "markdown" ||
       previewType === "csv" ||
+      previewType === "excel" ||
       previewType === "docx" ||
       previewType === "code";
 
@@ -317,6 +445,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
         content: "",
         rows: [],
         html: "",
+        excelSheetName: "",
       });
       return;
     }
@@ -330,10 +459,11 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
           content: "",
           rows: [],
           html: "",
+          excelSheetName: "",
         });
 
         if (previewType === "docx") {
-          const response = await fetch(safeFileUrl);
+          const response = await fetch(currentFileUrl);
 
           if (!response.ok) {
             throw new Error("Não foi possível carregar o arquivo DOCX.");
@@ -349,6 +479,49 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
             content: "",
             rows: [],
             html: result.value,
+            excelSheetName: "",
+          });
+
+          return;
+        }
+
+        if (previewType === "excel") {
+          const response = await fetch(currentFileUrl);
+
+          if (!response.ok) {
+            throw new Error("Não foi possível carregar a planilha.");
+          }
+
+          const arrayBuffer = await response.arrayBuffer();
+          const workbook = XLSX.read(arrayBuffer, {
+            type: "array",
+            cellDates: true,
+          });
+
+          const firstSheetName = workbook.SheetNames[0];
+
+          if (!firstSheetName) {
+            throw new Error("Planilha sem abas disponíveis.");
+          }
+
+          const worksheet = workbook.Sheets[firstSheetName];
+          const rawRows = XLSX.utils.sheet_to_json<unknown[]>(worksheet, {
+            header: 1,
+            raw: false,
+            defval: "",
+            blankrows: false,
+          });
+
+          const rows = normalizeSheetRows(rawRows);
+
+          if (isCancelled) return;
+
+          setTextPreview({
+            status: "success",
+            content: "",
+            rows,
+            html: "",
+            excelSheetName: firstSheetName,
           });
 
           return;
@@ -372,6 +545,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
             content,
             rows,
             html: "",
+            excelSheetName: "",
           });
 
           return;
@@ -382,6 +556,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
           content,
           rows: [],
           html: "",
+          excelSheetName: "",
         });
       } catch {
         if (isCancelled) return;
@@ -391,11 +566,12 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
           content: "",
           rows: [],
           html: "",
+          excelSheetName: "",
         });
       }
     }
 
-    loadTextPreview();
+    void loadTextPreview();
 
     return () => {
       isCancelled = true;
@@ -419,6 +595,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
   }, [open, onClose]);
 
   if (!open || !file || !fileUrl) return null;
+
   const safeFile = file;
   const safeFileUrl = fileUrl;
 
@@ -430,9 +607,71 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
     event.stopPropagation();
   }
 
+  function renderTable(rows: string[][], label?: string) {
+    if (rows.length === 0) {
+      return (
+        <div className="empty-state">
+          <div className="empty-state-emoji">📊</div>
+          <h3>Arquivo vazio</h3>
+          <p>Não há dados para mostrar neste arquivo.</p>
+        </div>
+      );
+    }
+
+    const maxColumns = rows.reduce((acc, row) => Math.max(acc, row.length), 0);
+    const paddedRows = rows.map((row) => {
+      const copy = [...row];
+      while (copy.length < maxColumns) copy.push("");
+      return copy;
+    });
+
+    const header = paddedRows[0];
+    const body = paddedRows.slice(1);
+
+    return (
+      <div className="text-preview-wrapper">
+        <div className="text-preview-toolbar">
+          <span className="preview-type-badge">
+            {getLanguageLabel(extension)}
+          </span>
+
+          {label ? <span className="preview-meta-badge">{label}</span> : null}
+        </div>
+
+        <div className="csv-preview-table-wrapper">
+          <table className="csv-preview-table">
+            <thead>
+              <tr>
+                {header.map((cell, index) => (
+                  <th key={`${cell}-${index}`}>{cell || `Coluna ${index + 1}`}</th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody>
+              {body.map((row, rowIndex) => (
+                <tr key={`row-${rowIndex}`}>
+                  {row.map((cell, colIndex) => (
+                    <td key={`cell-${rowIndex}-${colIndex}`}>{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
   function renderPreview() {
     if (previewType === "image") {
-      return <img src={safeFileUrl} alt={safeFile.name} className="preview-image" />;
+      return (
+        <img
+          src={safeFileUrl}
+          alt={safeFile.name}
+          className="preview-image"
+        />
+      );
     }
 
     if (previewType === "pdf") {
@@ -486,6 +725,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
       previewType === "code" ||
       previewType === "markdown" ||
       previewType === "csv" ||
+      previewType === "excel" ||
       previewType === "docx"
     ) {
       if (textPreview.status === "loading") {
@@ -511,53 +751,15 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
       }
 
       if (previewType === "csv") {
-        const rows = textPreview.rows;
+        return renderTable(textPreview.rows);
+      }
 
-        if (rows.length === 0) {
-          return (
-            <div className="empty-state">
-              <div className="empty-state-emoji">📊</div>
-              <h3>Arquivo CSV vazio</h3>
-              <p>Não há dados para mostrar neste arquivo.</p>
-            </div>
-          );
-        }
-
-        const header = rows[0];
-        const body = rows.slice(1);
-
-        return (
-          <div className="text-preview-wrapper">
-            <div className="text-preview-toolbar">
-              <span className="preview-type-badge">
-                {getLanguageLabel(extension)}
-              </span>
-            </div>
-
-            <div className="csv-preview-table-wrapper">
-              <table className="csv-preview-table">
-                <thead>
-                  <tr>
-                    {header.map((cell, index) => (
-                      <th key={`${cell}-${index}`}>{cell || `Coluna ${index + 1}`}</th>
-                    ))}
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {body.map((row, rowIndex) => (
-                    <tr key={`row-${rowIndex}`}>
-                      {header.map((_, colIndex) => (
-                        <td key={`cell-${rowIndex}-${colIndex}`}>
-                          {row[colIndex] ?? ""}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+      if (previewType === "excel") {
+        return renderTable(
+          textPreview.rows,
+          textPreview.excelSheetName
+            ? `Aba: ${textPreview.excelSheetName}`
+            : undefined
         );
       }
 
@@ -648,7 +850,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
       >
         <div className="preview-header">
           <div>
-            <h3>{file.name}</h3>
+            <h3>{safeFile.name}</h3>
             <p className="muted">Pré-visualização do arquivo</p>
           </div>
 
