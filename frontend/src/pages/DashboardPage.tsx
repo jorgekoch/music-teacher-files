@@ -545,11 +545,13 @@ export function DashboardPage() {
           folders={folders}
           selectedFolderId={selectedFolderId}
           loading={loadingFolders}
+          profile={profile}
           onSelectFolder={handleSelectFolder}
           onEditFolder={setFolderToEdit}
           onDeleteFolder={setFolderToDelete}
           draggingFileId={draggingFileId}
           onDropFileOnFolder={handleMoveFile}
+          onUpgradeClick={() => setWaitlistOpen(true)}
         />
 
         <FilePanel

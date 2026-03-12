@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { api } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
 import { BrandLogo } from "../components/BrandLogo";
-import { PublicLayout } from "../components/PublicLayout";
+import { AuthLayout } from "../components/AuthLayout";
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -42,7 +42,7 @@ export function RegisterPage() {
   }
 
   return (
-    <PublicLayout>
+    <AuthLayout>
       <section className="public-auth-page">
         <div className="public-auth-page__header">
           <BrandLogo variant="public" />
@@ -111,6 +111,6 @@ export function RegisterPage() {
           </Link>
         </div>
       </section>
-    </PublicLayout>
+    </AuthLayout>
   );
 }

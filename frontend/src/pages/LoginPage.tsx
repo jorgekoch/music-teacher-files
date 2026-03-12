@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
 import { BrandLogo } from "../components/BrandLogo";
-import { PublicLayout } from "../components/PublicLayout";
+import { AuthLayout } from "../components/AuthLayout";
 
 export function LoginPage() {
   const { login, isAuthenticated, isAuthLoading } = useAuth();
@@ -39,7 +39,7 @@ export function LoginPage() {
   }
 
   return (
-    <PublicLayout>
+    <AuthLayout>
       <section className="public-auth-page">
         <div className="public-auth-page__header">
           <BrandLogo variant="public" />
@@ -104,6 +104,6 @@ export function LoginPage() {
           </Link>
         </div>
       </section>
-    </PublicLayout>
+    </AuthLayout>
   );
 }

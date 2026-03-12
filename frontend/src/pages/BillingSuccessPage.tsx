@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { BrandLogo } from "../components/BrandLogo";
 import { getCheckoutSessionStatus } from "../services/billingService";
-import { PublicLayout } from "../components/PublicLayout";
+import { AuthLayout } from "../components/AuthLayout";
 
 type SessionState = {
   loading: boolean;
@@ -91,7 +91,7 @@ export function BillingSuccessPage() {
   }
 
   return (
-    <PublicLayout>
+    <AuthLayout>
       <section className="public-auth-page">
         <div className="public-auth-page__header">
           <BrandLogo variant="public" />
@@ -155,6 +155,6 @@ export function BillingSuccessPage() {
           </div>
         </div>
       </section>
-    </PublicLayout>
+    </AuthLayout>
   );
 }

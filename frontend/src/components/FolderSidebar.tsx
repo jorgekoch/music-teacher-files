@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Folder } from "../types";
+import type { Folder, Profile } from "../types";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { EmptyState } from "./EmptyState";
 
@@ -7,22 +7,42 @@ type Props = {
   folders: Folder[];
   selectedFolderId: number | null;
   loading: boolean;
+  profile: Profile | null;
   onSelectFolder: (folderId: number) => void;
   onEditFolder: (folder: Folder) => void;
   onDeleteFolder: (folder: Folder) => void;
   draggingFileId: number | null;
   onDropFileOnFolder: (fileId: number, folderId: number) => void;
+  onUpgradeClick: () => void;
 };
+
+function formatBytes(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = bytes;
+  let unitIndex = 0;
+
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex++;
+  }
+
+  const digits = value >= 100 || unitIndex === 0 ? 0 : value >= 10 ? 1 : 2;
+  return `${value.toFixed(digits)} ${units[unitIndex]}`;
+}
 
 export function FolderSidebar({
   folders,
   selectedFolderId,
   loading,
+  profile,
   onSelectFolder,
   onEditFolder,
   onDeleteFolder,
   draggingFileId,
   onDropFileOnFolder,
+  onUpgradeClick,
 }: Props) {
   const [dragOverFolderId, setDragOverFolderId] = useState<number | null>(null);
 
@@ -50,6 +70,19 @@ export function FolderSidebar({
 
     onDropFileOnFolder(fileId, folderId);
   }
+
+  const storageUsed = profile?.storageUsed ?? 0;
+  const storageLimit = profile?.storageLimit ?? 0;
+  const plan = profile?.plan ?? "FREE";
+
+  const usagePercent =
+    storageLimit > 0
+      ? Math.min(Math.round((storageUsed / storageLimit) * 100), 100)
+      : 0;
+
+  const isFreePlan = plan === "FREE";
+  const isWarning = usagePercent >= 80 && usagePercent < 95;
+  const isCritical = usagePercent >= 95;
 
   return (
     <aside className="sidebar card mobile-section-card">
@@ -114,6 +147,65 @@ export function FolderSidebar({
           })}
         </div>
       )}
+
+      <div className="sidebar-storage card">
+        <div className="sidebar-storage__header">
+          <p className="sidebar-storage__label">Armazenamento</p>
+
+          <span
+            className={`sidebar-storage__plan ${
+              isFreePlan
+                ? "sidebar-storage__plan--free"
+                : "sidebar-storage__plan--pro"
+            }`}
+          >
+            {plan}
+          </span>
+        </div>
+
+        <strong className="sidebar-storage__value">
+          {formatBytes(storageUsed)} de {formatBytes(storageLimit)}
+        </strong>
+
+        <p className="muted sidebar-storage__usage-text">
+          {usagePercent}% do espaço utilizado
+        </p>
+
+        <div className="storage-bar sidebar-storage__bar">
+          <div
+            className={[
+              "storage-fill",
+              isWarning ? "storage-fill-warning" : "",
+              isCritical ? "storage-fill-critical" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{ width: `${usagePercent}%` }}
+          />
+        </div>
+
+        {isCritical && (
+          <div className="sidebar-storage__alert sidebar-storage__alert--critical">
+            Você está muito próximo do limite do seu plano.
+          </div>
+        )}
+
+        {isWarning && !isCritical && (
+          <div className="sidebar-storage__alert sidebar-storage__alert--warning">
+            Seu espaço está acabando.
+          </div>
+        )}
+
+        {isFreePlan && (
+          <button
+            type="button"
+            className="ghost-button full-width small"
+            onClick={onUpgradeClick}
+          >
+            Atualizar para PRO
+          </button>
+        )}
+      </div>
     </aside>
   );
 }

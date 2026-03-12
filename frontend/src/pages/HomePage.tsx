@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { WaitlistDialog } from "../components/WaitlistDialog";
 import { PublicLayout } from "../components/PublicLayout";
+import { HowItWorks } from "../components/HowItWorks";
+import { FilePreviewFeatures } from "../components/FilePreviewFeatures";
 
 export function HomePage() {
   const [waitlistOpen, setWaitlistOpen] = useState(false);
@@ -84,39 +86,8 @@ export function HomePage() {
           </div>
         </section>
 
-        <section className="landing-section">
-          <div className="section-title-block">
-            <p className="eyebrow">Como funciona</p>
-            <h3 className="cta-title">Comece em poucos passos</h3>
-            <p className="muted">
-              O Arquivapp foi pensado para ser simples desde o primeiro acesso.
-            </p>
-          </div>
-
-          <div className="landing-features">
-            <div className="landing-feature-card">
-              <h3>1. Crie sua conta</h3>
-              <p className="muted">
-                Cadastre-se gratuitamente e acesse seu espaço pessoal.
-              </p>
-            </div>
-
-            <div className="landing-feature-card">
-              <h3>2. Envie seus arquivos</h3>
-              <p className="muted">
-                Faça upload de documentos, PDFs, imagens e outros arquivos
-                importantes.
-              </p>
-            </div>
-
-            <div className="landing-feature-card">
-              <h3>3. Organize como quiser</h3>
-              <p className="muted">
-                Separe tudo em pastas e encontre seus arquivos com mais rapidez.
-              </p>
-            </div>
-          </div>
-        </section>
+        <HowItWorks />
+        <FilePreviewFeatures />
 
         <section className="landing-section">
           <div className="section-title-block">

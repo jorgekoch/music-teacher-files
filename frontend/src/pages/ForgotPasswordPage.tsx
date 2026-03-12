@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { api } from "../services/api";
 import { BrandLogo } from "../components/BrandLogo";
-import { PublicLayout } from "../components/PublicLayout";
+import { AuthLayout } from "../components/AuthLayout";
 
 type ForgotPasswordResponse = {
   message: string;
@@ -37,7 +37,7 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <PublicLayout>
+    <AuthLayout>
       <section className="public-auth-page">
         <div className="public-auth-page__header">
           <BrandLogo variant="public" />
@@ -85,6 +85,6 @@ export function ForgotPasswordPage() {
           </Link>
         </div>
       </section>
-    </PublicLayout>
+    </AuthLayout>
   );
 }
