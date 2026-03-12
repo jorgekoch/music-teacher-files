@@ -3,7 +3,6 @@ import toast from "react-hot-toast";
 import { api } from "../services/api";
 import type { FileItem, Folder, Profile } from "../types";
 import { Layout } from "../components/Layout";
-import { CreateFolderForm } from "../components/CreateFolderForm";
 import { FolderSidebar } from "../components/FolderSidebar";
 import { FilePanel } from "../components/FilePanel";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -13,6 +12,7 @@ import { ProfileDialog } from "../components/ProfileDialog";
 import { OnboardingCard } from "../components/OnboardingCard";
 import { WaitlistDialog } from "../components/WaitlistDialog";
 import { useAuth } from "../hooks/useAuth";
+import { createProCheckoutSession } from "../services/billingService";
 
 const SELECTED_FOLDER_STORAGE_KEY = "Arquivapp:selectedFolderId";
 const ONBOARDING_DISMISSED_STORAGE_KEY = "Arquivapp:onboardingDismissed";
@@ -236,9 +236,11 @@ export function DashboardPage() {
       saveDashboardCache(data);
     } catch (err: any) {
       console.error("Erro real no loadInitialDashboard:", err);
-      console.error("Resposta do backend: ", err?.response?.status)
+      console.error("Resposta do backend: ", err?.response?.status);
 
-      toast.error(err?.response?.data?.error || err?.message ||"Erro ao carregar dashboard");
+      toast.error(
+        err?.response?.data?.error || err?.message || "Erro ao carregar dashboard"
+      );
     } finally {
       setLoadingFolders(false);
       setLoadingFiles(false);
@@ -524,6 +526,23 @@ export function DashboardPage() {
     }
   }
 
+  async function handleUpgradeToPro() {
+    try {
+      const checkoutUrl = await createProCheckoutSession();
+
+      if (!checkoutUrl) {
+        toast.error("Não foi possível iniciar o checkout.");
+        return;
+      }
+
+      window.location.href = checkoutUrl;
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.error || "Erro ao iniciar o checkout."
+      );
+    }
+  }
+
   return (
     <Layout
       profile={profile}
@@ -536,22 +555,19 @@ export function DashboardPage() {
         onDismiss={dismissOnboarding}
       />
 
-      <div ref={createFolderSectionRef} className="dashboard-header card">
-        <CreateFolderForm onCreate={handleCreateFolder} />
-      </div>
-
-      <div className="dashboard-grid">
+      <div ref={createFolderSectionRef} className="dashboard-grid">
         <FolderSidebar
           folders={folders}
           selectedFolderId={selectedFolderId}
           loading={loadingFolders}
           profile={profile}
+          onCreateFolder={handleCreateFolder}
           onSelectFolder={handleSelectFolder}
           onEditFolder={setFolderToEdit}
           onDeleteFolder={setFolderToDelete}
           draggingFileId={draggingFileId}
           onDropFileOnFolder={handleMoveFile}
-          onUpgradeClick={() => setWaitlistOpen(true)}
+          onUpgradeClick={handleUpgradeToPro}
         />
 
         <FilePanel
@@ -620,7 +636,7 @@ export function DashboardPage() {
         onUpdateProfile={handleUpdateProfile}
         onUpdatePassword={handleUpdatePassword}
         onUpdateAvatar={handleUpdateAvatar}
-        onOpenWaitlist={() => setWaitlistOpen(true)}
+        onOpenWaitlist={handleUpgradeToPro}
       />
 
       <WaitlistDialog

@@ -2,12 +2,14 @@ import { useState } from "react";
 import type { Folder, Profile } from "../types";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { EmptyState } from "./EmptyState";
+import { CreateFolderForm } from "./CreateFolderForm";
 
 type Props = {
   folders: Folder[];
   selectedFolderId: number | null;
   loading: boolean;
   profile: Profile | null;
+  onCreateFolder: (name: string) => Promise<void> | void;
   onSelectFolder: (folderId: number) => void;
   onEditFolder: (folder: Folder) => void;
   onDeleteFolder: (folder: Folder) => void;
@@ -37,6 +39,7 @@ export function FolderSidebar({
   selectedFolderId,
   loading,
   profile,
+  onCreateFolder,
   onSelectFolder,
   onEditFolder,
   onDeleteFolder,
@@ -85,7 +88,7 @@ export function FolderSidebar({
   const isCritical = usagePercent >= 95;
 
   return (
-    <aside className="sidebar card mobile-section-card">
+    <aside className="sidebar card mobile-section-card sidebar-layout">
       <div className="section-header compact-section-header">
         <div>
           <h2>Pastas</h2>
@@ -93,60 +96,66 @@ export function FolderSidebar({
         </div>
       </div>
 
-      {loading ? (
-        <LoadingSkeleton lines={5} height={54} />
-      ) : folders.length === 0 ? (
-        <EmptyState
-          emoji="📁"
-          title="Nenhuma pasta criada"
-          description="Crie sua primeira pasta para começar a organizar seus arquivos."
-        />
-      ) : (
-        <div className="folder-list mobile-folder-list">
-          {folders.map((folder) => {
-            const isDragTarget =
-              draggingFileId !== null && dragOverFolderId === folder.id;
+      <div className="sidebar-create-folder">
+        <CreateFolderForm onCreate={onCreateFolder} compact />
+      </div>
 
-            return (
-              <div
-                key={folder.id}
-                className={`folder-item mobile-folder-item ${
-                  selectedFolderId === folder.id ? "active-folder" : ""
-                } ${isDragTarget ? "folder-drop-target" : ""}`}
-                onDragOver={(e) => handleDragOver(e, folder.id)}
-                onDragLeave={() => handleDragLeave(folder.id)}
-                onDrop={(e) => handleDrop(e, folder.id)}
-              >
-                <button
-                  className="folder-name-button"
-                  onClick={() => onSelectFolder(folder.id)}
+      <div className="sidebar-folders-scroll">
+        {loading ? (
+          <LoadingSkeleton lines={5} height={54} />
+        ) : folders.length === 0 ? (
+          <EmptyState
+            emoji="📁"
+            title="Nenhuma pasta criada"
+            description="Crie sua primeira pasta para começar a organizar seus arquivos."
+          />
+        ) : (
+          <div className="folder-list mobile-folder-list">
+            {folders.map((folder) => {
+              const isDragTarget =
+                draggingFileId !== null && dragOverFolderId === folder.id;
+
+              return (
+                <div
+                  key={folder.id}
+                  className={`folder-item mobile-folder-item ${
+                    selectedFolderId === folder.id ? "active-folder" : ""
+                  } ${isDragTarget ? "folder-drop-target" : ""}`}
+                  onDragOver={(e) => handleDragOver(e, folder.id)}
+                  onDragLeave={() => handleDragLeave(folder.id)}
+                  onDrop={(e) => handleDrop(e, folder.id)}
                 >
-                  <span className="folder-emoji">📁</span>
-                  <span className="folder-name-text">{folder.name}</span>
-                </button>
-
-                <div className="folder-actions">
                   <button
-                    className="icon-button"
-                    onClick={() => onEditFolder(folder)}
-                    aria-label={`Renomear pasta ${folder.name}`}
+                    className="folder-name-button"
+                    onClick={() => onSelectFolder(folder.id)}
                   >
-                    ✏️
+                    <span className="folder-emoji">📁</span>
+                    <span className="folder-name-text">{folder.name}</span>
                   </button>
 
-                  <button
-                    className="icon-button danger"
-                    onClick={() => onDeleteFolder(folder)}
-                    aria-label={`Excluir pasta ${folder.name}`}
-                  >
-                    🗑️
-                  </button>
+                  <div className="folder-actions">
+                    <button
+                      className="icon-button"
+                      onClick={() => onEditFolder(folder)}
+                      aria-label={`Renomear pasta ${folder.name}`}
+                    >
+                      ✏️
+                    </button>
+
+                    <button
+                      className="icon-button danger"
+                      onClick={() => onDeleteFolder(folder)}
+                      aria-label={`Excluir pasta ${folder.name}`}
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <div className="sidebar-storage card">
         <div className="sidebar-storage__header">
