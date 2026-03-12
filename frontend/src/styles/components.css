@@ -237,3 +237,40 @@
 .empty-state h3 {
   margin: 0 0 8px;
 }
+
+/* BILLING SUCCESS */
+.billing-status-box {
+  margin-top: 18px;
+  margin-bottom: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.billing-status-box strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.billing-status-box p {
+  margin: 0;
+}
+
+.billing-status-box--info {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.billing-status-box--success {
+  background: var(--success-bg);
+  border-color: #abefc6;
+  color: var(--success-text);
+}
+
+.billing-status-box--warning {
+  background: var(--danger-bg);
+  border-color: #fecdca;
+  color: var(--danger-text);
+}

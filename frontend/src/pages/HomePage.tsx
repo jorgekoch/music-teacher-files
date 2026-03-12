@@ -164,9 +164,9 @@ export function HomePage() {
               <p className="eyebrow">Planos</p>
               <h3 className="cta-title">Comece grátis e evolua quando precisar</h3>
               <p className="muted">
-                O Arquivapp já está disponível gratuitamente em fase Beta. O
-                plano PRO será liberado em breve com mais armazenamento e novos
-                recursos.
+                O Arquivapp já está disponível gratuitamente em fase Beta. O plano
+                PRO será liberado em breve com mais armazenamento, compartilhamento
+                por link e recursos pensados para um uso mais profissional.
               </p>
             </div>
 
@@ -176,7 +176,7 @@ export function HomePage() {
                 <h4>Plano Gratuito</h4>
                 <p className="landing-plan-card__price">R$ 0/mês</p>
                 <p className="muted">
-                  Perfeito para começar a organizar seus arquivos na nuvem.
+                  Ideal para começar a organizar seus arquivos na nuvem.
                 </p>
 
                 <ul className="landing-plan-card__list">
@@ -184,7 +184,7 @@ export function HomePage() {
                   <li>Organização por pastas</li>
                   <li>Upload e gerenciamento de arquivos</li>
                   <li>Busca e visualização de arquivos</li>
-                  <li>Área privada com acesso protegido</li>
+                  <li>Sem compartilhamento por link</li>
                 </ul>
 
                 <Link to="/register" className="primary-button full-width">
@@ -202,15 +202,15 @@ export function HomePage() {
                   <span className="plan-price-note"> (em breve)</span>
                 </p>
                 <p className="muted">
-                  Mais espaço e mais possibilidades para quem precisa de mais.
+                  Mais espaço e recursos para quem precisa usar o Arquivapp de forma mais avançada.
                 </p>
 
                 <ul className="landing-plan-card__list">
                   <li>20 GB de armazenamento</li>
-                  <li>Arquivos maiores</li>
+                  <li>Compartilhamento por link público</li>
+                  <li>Arquivos maiores por upload</li>
                   <li>Mais capacidade para organização</li>
-                  <li>Melhor aproveitamento para uso profissional</li>
-                  <li>Recursos avançados nas próximas versões</li>
+                  <li>Uso mais profissional no dia a dia</li>
                 </ul>
 
                 <button

@@ -556,6 +556,7 @@ export function DashboardPage() {
           selectedFolder={selectedFolder}
           files={files}
           loading={loadingFiles}
+          profile={profile}
           onUpload={handleUpload}
           onEditFile={setFileToEdit}
           onDeleteFile={setFileToDelete}

@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import type { Profile } from "../types";
 import { UserAvatar } from "./UserAvatar";
 import { useTheme } from "../hooks/useTheme";
+import {
+  createCustomerPortalSession,
+  createProCheckoutSession,
+} from "../services/billingService";
 
 type Props = {
   open: boolean;
@@ -23,7 +27,6 @@ export function ProfileDialog({
   onUpdateProfile,
   onUpdatePassword,
   onUpdateAvatar,
-  onOpenWaitlist,
 }: Props) {
   const { theme, setTheme } = useTheme();
 
@@ -33,6 +36,8 @@ export function ProfileDialog({
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [loadingPassword, setLoadingPassword] = useState(false);
   const [loadingAvatar, setLoadingAvatar] = useState(false);
+  const [loadingCheckout, setLoadingCheckout] = useState(false);
+  const [loadingPortal, setLoadingPortal] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -126,17 +131,32 @@ export function ProfileDialog({
     }
   }
 
+  async function handleUpgradeToPro() {
+    try {
+      setLoadingCheckout(true);
+      const { url } = await createProCheckoutSession();
+      window.location.href = url;
+    } finally {
+      setLoadingCheckout(false);
+    }
+  }
+
+  async function handleManageSubscription() {
+    try {
+      setLoadingPortal(true);
+      const { url } = await createCustomerPortalSession();
+      window.location.href = url;
+    } finally {
+      setLoadingPortal(false);
+    }
+  }
+
   function handleOverlayClick() {
     onClose();
   }
 
   function handleDialogClick(e: React.MouseEvent<HTMLDivElement>) {
     e.stopPropagation();
-  }
-
-  function handleOpenProWaitlist() {
-    onClose();
-    onOpenWaitlist();
   }
 
   function getStorageAlert() {
@@ -146,7 +166,7 @@ export function ProfileDialog({
       return {
         title: "Seu armazenamento está praticamente cheio",
         description:
-          "Você está muito perto do limite do plano FREE de 500 MB. O plano PRO terá 20 GB por R$19,90/mês.",
+          "Você está muito perto do limite do plano FREE de 500 MB. O plano PRO inclui 20 GB e recursos avançados.",
         className: "profile-storage-alert profile-storage-alert--critical",
       };
     }
@@ -155,7 +175,7 @@ export function ProfileDialog({
       return {
         title: "Seu armazenamento está quase cheio",
         description:
-          "Você já usou boa parte do seu espaço no plano FREE de 500 MB. O plano PRO terá 20 GB por R$19,90/mês.",
+          "Você já usou boa parte do seu espaço no plano FREE de 500 MB. O plano PRO inclui 20 GB e recursos avançados.",
         className: "profile-storage-alert profile-storage-alert--warning",
       };
     }
@@ -253,23 +273,42 @@ export function ProfileDialog({
             </div>
           )}
 
-          {isFreePlan && (
+          {isFreePlan ? (
             <div className="profile-upgrade-callout">
               <div>
-                <strong>Precisa de mais espaço?</strong>
+                <strong>Precisa de mais espaço e recursos?</strong>
                 <p className="muted">
-                  Seu plano atual inclui <strong>500 MB</strong>. O plano PRO
-                  terá <strong>20 GB</strong> de armazenamento por{" "}
-                  <strong>R$19,90/mês</strong>.
+                  O plano PRO inclui <strong>20 GB</strong> de armazenamento,
+                  compartilhamento por link e arquivos maiores.
                 </p>
               </div>
 
               <button
                 type="button"
                 className="ghost-button small"
-                onClick={handleOpenProWaitlist}
+                onClick={handleUpgradeToPro}
+                disabled={loadingCheckout}
               >
-                Quero saber do PRO
+                {loadingCheckout ? "Redirecionando..." : "Assinar PRO"}
+              </button>
+            </div>
+          ) : (
+            <div className="profile-upgrade-callout">
+              <div>
+                <strong>Plano PRO ativo</strong>
+                <p className="muted">
+                  Gerencie cobrança, forma de pagamento e assinatura no portal do
+                  cliente.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="ghost-button small"
+                onClick={handleManageSubscription}
+                disabled={loadingPortal}
+              >
+                {loadingPortal ? "Abrindo..." : "Gerenciar assinatura"}
               </button>
             </div>
           )}

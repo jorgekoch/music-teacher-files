@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import type { Profile } from "../types";
 
 type Props = {
   disabled?: boolean;
+  profile: Profile | null;
   onUpload: (file: File) => Promise<void>;
 };
 
@@ -10,13 +12,33 @@ const ACCEPTED_TYPES = [
   "application/pdf",
   "audio/mpeg",
   "audio/wav",
+  "audio/ogg",
   "image/jpeg",
   "image/png",
+  "text/plain",
+  "text/markdown",
+  "text/csv",
+  "application/json",
+  "text/javascript",
+  "application/javascript",
+  "text/typescript",
+  "text/html",
+  "text/css",
+  "video/mp4",
+  "video/webm",
+  "video/ogg",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/msword",
 ];
 
-export function UploadFileForm({ disabled = false, onUpload }: Props) {
+const FREE_MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+const PRO_MAX_FILE_SIZE = 500 * 1024 * 1024; // 500 MB
+
+export function UploadFileForm({
+  disabled = false,
+  profile,
+  onUpload,
+}: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const progressIntervalRef = useRef<number | null>(null);
 
@@ -27,9 +49,22 @@ export function UploadFileForm({ disabled = false, onUpload }: Props) {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadingCount, setUploadingCount] = useState(0);
 
+  const isPro = profile?.plan === "PRO";
+  const maxFileSize = isPro ? PRO_MAX_FILE_SIZE : FREE_MAX_FILE_SIZE;
+  const maxFileSizeLabel = isPro ? "500 MB" : "50 MB";
+
   function validateFile(file: File) {
     if (!ACCEPTED_TYPES.includes(file.type)) {
       toast.error(`Tipo de arquivo não permitido: ${file.name}`);
+      return false;
+    }
+
+    if (file.size > maxFileSize) {
+      toast.error(
+        isPro
+          ? `${file.name} excede o limite de 500 MB por arquivo.`
+          : `${file.name} excede o limite de 50 MB por arquivo no plano FREE.`
+      );
       return false;
     }
 
@@ -197,7 +232,7 @@ export function UploadFileForm({ disabled = false, onUpload }: Props) {
         type="file"
         hidden
         multiple
-        accept=".pdf,.mp3,.wav,.jpg,.jpeg,.png,.doc,.docx"
+        accept=".pdf,.mp3,.wav,.ogg,.jpg,.jpeg,.png,.txt,.md,.csv,.json,.js,.ts,.html,.css,.mp4,.webm,.doc,.docx"
         onChange={handleInputChange}
       />
 
@@ -222,7 +257,7 @@ export function UploadFileForm({ disabled = false, onUpload }: Props) {
           <p className="muted upload-dropzone-subtitle">
             {uploadSuccess || loading
               ? uploadingFileName
-              : "Formatos aceitos: PDF, MP3, WAV, JPG, PNG, DOC e DOCX"}
+              : `Limite por arquivo: ${maxFileSizeLabel}. Formatos aceitos: PDF, áudio, imagem, vídeo, texto, CSV, DOC e DOCX`}
           </p>
 
           {(loading || uploadSuccess) && (

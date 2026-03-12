@@ -10,6 +10,7 @@ import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { SharedFilePage } from "./pages/SharedFilePage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
+import { BillingSuccessPage } from "./pages/BillingSuccessPage";
 
 export default function App() {
   return (
@@ -34,14 +35,14 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/shared/:token" element={<SharedFilePage />} />
-            <Route
-              path="/dashboard"
+            <Route path="/dashboard"
               element={
                 <ProtectedRoute>
                   <DashboardPage />
                 </ProtectedRoute>
               }
             />
+            <Route path="/billing/success" element={<BillingSuccessPage />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

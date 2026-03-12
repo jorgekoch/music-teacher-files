@@ -1,16 +1,18 @@
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { api } from "../services/api";
-import type { FileItem, Folder } from "../types";
+import type { FileItem, Folder, Profile } from "../types";
 import { UploadFileForm } from "./UploadFileForm";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { EmptyState } from "./EmptyState";
 import { FilePreviewDialog } from "./FilePreviewDialog";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 type Props = {
   selectedFolder: Folder | null;
   files: FileItem[];
   loading: boolean;
+  profile: Profile | null;
   onUpload: (file: File) => Promise<void>;
   onEditFile: (file: FileItem) => void;
   onDeleteFile: (file: FileItem) => void;
@@ -37,6 +39,7 @@ export function FilePanel({
   selectedFolder,
   files,
   loading,
+  profile,
   onUpload,
   onEditFile,
   onDeleteFile,
@@ -57,6 +60,9 @@ export function FilePanel({
   const [loadingOpenId, setLoadingOpenId] = useState<number | null>(null);
   const [loadingShareId, setLoadingShareId] = useState<number | null>(null);
   const [copiedShareId, setCopiedShareId] = useState<number | null>(null);
+  const [showProFeatureDialog, setShowProFeatureDialog] = useState(false);
+
+  const isPro = profile?.plan === "PRO";
 
   const filteredFiles = useMemo(() => {
     const normalized = search.trim().toLowerCase();
@@ -163,7 +169,7 @@ export function FilePanel({
       case "txt":
         return "📝";
       default:
-        return "📁";
+        return "📄";
     }
   }
 
@@ -198,6 +204,11 @@ export function FilePanel({
   }
 
   async function handleShare(file: FileItem) {
+    if (!isPro) {
+      setShowProFeatureDialog(true);
+      return;
+    }
+
     try {
       setLoadingShareId(file.id);
 
@@ -294,7 +305,11 @@ export function FilePanel({
           </div>
         </div>
 
-        <UploadFileForm disabled={!selectedFolder} onUpload={onUpload} />
+        <UploadFileForm
+         disabled={!selectedFolder}
+         profile={profile} 
+         onUpload={onUpload} 
+        />
 
         <div className="file-toolbar">
           <input
@@ -428,8 +443,11 @@ export function FilePanel({
                         }`}
                         onClick={() => handleShare(file)}
                         disabled={loadingShareId === file.id}
+                        title={!isPro ? "Disponível apenas no plano PRO" : ""}
                       >
-                        {loadingShareId === file.id
+                        {!isPro
+                          ? "Compartilhar (PRO)"
+                          : loadingShareId === file.id
                           ? "Copiando..."
                           : copiedShareId === file.id
                           ? "Copiado"
@@ -463,6 +481,15 @@ export function FilePanel({
         file={previewFile}
         fileUrl={previewUrl}
         onClose={handleClosePreview}
+      />
+
+      <ConfirmDialog
+        open={showProFeatureDialog}
+        title="Recurso exclusivo do plano PRO"
+        description="O compartilhamento por link público está disponível apenas para usuários do plano PRO."
+        confirmText="Entendi"
+        onCancel={() => setShowProFeatureDialog(false)}
+        onConfirm={() => setShowProFeatureDialog(false)}
       />
     </>
   );
