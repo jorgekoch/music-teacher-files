@@ -331,7 +331,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
         });
 
         if (previewType === "docx") {
-          const response = await fetch(fileUrl);
+          const response = await fetch(safeFileUrl);
 
           if (!response.ok) {
             throw new Error("Não foi possível carregar o arquivo DOCX.");
@@ -352,7 +352,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
           return;
         }
 
-        const response = await fetch(fileUrl);
+        const response = await fetch(safeFileUrl);
 
         if (!response.ok) {
           throw new Error("Não foi possível carregar o conteúdo do arquivo.");
@@ -417,6 +417,8 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
   }, [open, onClose]);
 
   if (!open || !file || !fileUrl) return null;
+  const safeFile = file;
+  const safeFileUrl = fileUrl;
 
   function handleOverlayClick() {
     onClose();
@@ -428,14 +430,14 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
 
   function renderPreview() {
     if (previewType === "image") {
-      return <img src={fileUrl} alt={file.name} className="preview-image" />;
+      return <img src={safeFileUrl} alt={safeFile.name} className="preview-image" />;
     }
 
     if (previewType === "pdf") {
       return (
         <iframe
-          src={fileUrl}
-          title={file.name}
+          src={safeFileUrl}
+          title={safeFile.name}
           className="preview-frame"
         />
       );
@@ -445,7 +447,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
       return (
         <div className="audio-preview">
           <audio controls className="audio-player">
-            <source src={fileUrl} />
+            <source src={safeFileUrl} />
             Seu navegador não suporta reprodução de áudio.
           </audio>
         </div>
@@ -456,7 +458,7 @@ export function FilePreviewDialog({ open, file, fileUrl, onClose }: Props) {
       return (
         <div className="video-preview">
           <video controls className="video-player">
-            <source src={fileUrl} />
+            <source src={safeFileUrl} />
             Seu navegador não suporta reprodução de vídeo.
           </video>
         </div>
