@@ -14,10 +14,13 @@ const ALLOWED_MIME_TYPES = [
   "application/pdf",
   "audio/mpeg",
   "audio/wav",
+  "audio/ogg",
   "image/jpeg",
   "image/png",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/msword",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
   "text/plain",
   "text/markdown",
   "text/csv",
@@ -29,7 +32,6 @@ const ALLOWED_MIME_TYPES = [
   "text/css",
   "video/mp4",
   "video/webm",
-  "audio/ogg",
   "video/ogg",
 ];
 
