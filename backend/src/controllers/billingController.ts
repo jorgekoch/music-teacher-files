@@ -59,9 +59,13 @@ export async function getCheckoutSessionStatusController(
     throw new AppError("Usuário não autenticado", 401);
   }
 
-  const { sessionId } = req.params;
+  const rawSessionId = req.params.sessionId;
 
-  const result = await getCheckoutSessionStatus(sessionId, userId);
+  if (!rawSessionId || Array.isArray(rawSessionId)) {
+    throw new AppError("Session ID inválido", 400);
+  }
+
+  const result = await getCheckoutSessionStatus(rawSessionId, userId);
 
   res.status(200).send(result);
 }
