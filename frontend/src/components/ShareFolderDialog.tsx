@@ -61,6 +61,7 @@ export function ShareFolderDialog({
 
     try {
       setLoadingInvite(true);
+      if (!folder) return;
       await onInvite(folder.id, trimmedEmail);
       setEmail("");
     } finally {
