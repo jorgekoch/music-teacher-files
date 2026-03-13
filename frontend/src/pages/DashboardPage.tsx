@@ -10,7 +10,6 @@ import { EditFolderDialog } from "../components/EditFolderDialog";
 import { EditFileDialog } from "../components/EditFileDialog";
 import { ProfileDialog } from "../components/ProfileDialog";
 import { OnboardingCard } from "../components/OnboardingCard";
-import { WaitlistDialog } from "../components/WaitlistDialog";
 import { useAuth } from "../hooks/useAuth";
 import { createProCheckoutSession } from "../services/billingService";
 
@@ -39,7 +38,6 @@ export function DashboardPage() {
 
   const [profile, setProfile] = useState<Profile | null>(user);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [waitlistOpen, setWaitlistOpen] = useState(false);
 
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
@@ -636,12 +634,6 @@ export function DashboardPage() {
         onUpdateProfile={handleUpdateProfile}
         onUpdatePassword={handleUpdatePassword}
         onUpdateAvatar={handleUpdateAvatar}
-        onOpenWaitlist={handleUpgradeToPro}
-      />
-
-      <WaitlistDialog
-        open={waitlistOpen}
-        onClose={() => setWaitlistOpen(false)}
       />
     </Layout>
   );

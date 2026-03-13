@@ -17,7 +17,6 @@ type Props = {
     newPassword: string
   ) => Promise<void>;
   onUpdateAvatar: (file: File) => Promise<void>;
-  onOpenWaitlist: () => void;
 };
 
 export function ProfileDialog({
@@ -134,8 +133,8 @@ export function ProfileDialog({
   async function handleUpgradeToPro() {
     try {
       setLoadingCheckout(true);
-      const { url } = await createProCheckoutSession();
-      window.location.href = url;
+      const checkoutUrl = await createProCheckoutSession();
+      window.location.href = checkoutUrl;
     } finally {
       setLoadingCheckout(false);
     }
@@ -144,8 +143,8 @@ export function ProfileDialog({
   async function handleManageSubscription() {
     try {
       setLoadingPortal(true);
-      const { url } = await createCustomerPortalSession();
-      window.location.href = url;
+      const portalUrl = await createCustomerPortalSession();
+      window.location.href = portalUrl;
     } finally {
       setLoadingPortal(false);
     }
