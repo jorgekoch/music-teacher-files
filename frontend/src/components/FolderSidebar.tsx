@@ -24,6 +24,7 @@ type Props = {
   draggingFileId: number | null;
   onDropFileOnFolder: (fileId: number, folderId: number) => void;
   onUpgradeClick: () => void;
+  onOpenProFeatureDialog: () => void;
 };
 
 type FolderView = "mine" | "shared";
@@ -58,6 +59,7 @@ export function FolderSidebar({
   draggingFileId,
   onDropFileOnFolder,
   onUpgradeClick,
+  onOpenProFeatureDialog,
 }: Props) {
   const [dragOverFolderId, setDragOverFolderId] = useState<number | null>(null);
   const [activeFolderView, setActiveFolderView] = useState<FolderView>("mine");
@@ -92,6 +94,7 @@ export function FolderSidebar({
   const storageUsed = profile?.storageUsed ?? 0;
   const storageLimit = profile?.storageLimit ?? 0;
   const plan = profile?.plan ?? "FREE";
+  const isPro = profile?.plan === "PRO";
 
   const usagePercent =
     storageLimit > 0
@@ -212,8 +215,16 @@ export function FolderSidebar({
 
                     <button
                       className="icon-button"
-                      onClick={() => onShareFolder(folder)}
+                      onClick={() => {
+                        if (!isPro) {
+                          onOpenProFeatureDialog();
+                          return;
+                        }
+
+                        onShareFolder(folder);
+                      }}
                       aria-label={`Compartilhar pasta ${folder.name}`}
+                      title={!isPro ? "Disponível apenas no plano PRO" : "Compartilhar pasta"}
                     >
                       👥
                     </button>

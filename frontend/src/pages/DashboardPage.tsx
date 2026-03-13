@@ -66,6 +66,7 @@ export function DashboardPage() {
   >([]);
 
   const [selectedFolderMeta, setSelectedFolderMeta] = useState<{isShared: boolean; ownerName?: string} | null>(null);
+  const [showProFeatureDialog, setShowProFeatureDialog] = useState(false);
 
   const selectedFolder = useMemo(() => {
     const ownedFolder =
@@ -748,6 +749,10 @@ export function DashboardPage() {
         draggingFileId={draggingFileId}
         onDropFileOnFolder={handleMoveFile}
         onUpgradeClick={handleUpgradeToPro}
+        onOpenProFeatureDialog={() =>
+          setShowProFeatureDialog(true)
+        }
+
       />
 
       <FilePanel
@@ -808,6 +813,15 @@ export function DashboardPage() {
       confirmText="Excluir arquivos"
       onCancel={() => setFilesToDelete([])}
       onConfirm={confirmDeleteSelectedFiles}
+    />
+
+    <ConfirmDialog
+      open={showProFeatureDialog}
+      title="Recurso exclusivo do plano PRO"
+      description="O compartilhamento de pastas está disponível apenas para usuários do plano PRO."
+      confirmText="Entendi"
+      onCancel={() => setShowProFeatureDialog(false)}
+      onConfirm={() => setShowProFeatureDialog(false)}
     />
 
     <ProfileDialog
