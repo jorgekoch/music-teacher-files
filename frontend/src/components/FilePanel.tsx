@@ -10,6 +10,7 @@ import { ConfirmDialog } from "./ConfirmDialog";
 
 type Props = {
   selectedFolder: Folder | null;
+  folderMeta?: { isShared: boolean; ownerName?: string } | null;
   files: FileItem[];
   loading: boolean;
   profile: Profile | null;
@@ -37,6 +38,7 @@ type ViewMode = "list" | "grid";
 
 export function FilePanel({
   selectedFolder,
+  folderMeta,
   files,
   loading,
   profile,
@@ -63,15 +65,14 @@ export function FilePanel({
   const [showProFeatureDialog, setShowProFeatureDialog] = useState(false);
 
   const isPro = profile?.plan === "PRO";
+  const isSharedFolder = folderMeta?.isShared === true;
 
   const filteredFiles = useMemo(() => {
     const normalized = search.trim().toLowerCase();
 
     if (!normalized) return files;
 
-    return files.filter((file) =>
-      file.name.toLowerCase().includes(normalized)
-    );
+    return files.filter((file) => file.name.toLowerCase().includes(normalized));
   }, [files, search]);
 
   const sortedFiles = useMemo(() => {
@@ -139,67 +140,67 @@ export function FilePanel({
   }
 
   function getFileIcon(fileName: string) {
-  const extension = fileName.split(".").pop()?.toLowerCase();
+    const extension = fileName.split(".").pop()?.toLowerCase();
 
-  switch (extension) {
-    case "pdf":
-      return "📄";
+    switch (extension) {
+      case "pdf":
+        return "📄";
 
-    case "doc":
-    case "docx":
-      return "📘";
+      case "doc":
+      case "docx":
+        return "📘";
 
-    case "xls":
-    case "xlsx":
-    case "csv":
-      return "📊";
+      case "xls":
+      case "xlsx":
+      case "csv":
+        return "📊";
 
-    case "ppt":
-    case "pptx":
-      return "📈";
+      case "ppt":
+      case "pptx":
+        return "📈";
 
-    case "jpg":
-    case "jpeg":
-    case "png":
-    case "gif":
-    case "webp":
-    case "svg":
-      return "🖼";
+      case "jpg":
+      case "jpeg":
+      case "png":
+      case "gif":
+      case "webp":
+      case "svg":
+        return "🖼";
 
-    case "mp3":
-    case "wav":
-    case "ogg":
-    case "m4a":
-      return "🎵";
+      case "mp3":
+      case "wav":
+      case "ogg":
+      case "m4a":
+        return "🎵";
 
-    case "mp4":
-    case "webm":
-    case "mov":
-      return "🎬";
+      case "mp4":
+      case "webm":
+      case "mov":
+        return "🎬";
 
-    case "zip":
-    case "rar":
-    case "7z":
-      return "📦";
+      case "zip":
+      case "rar":
+      case "7z":
+        return "📦";
 
-    case "txt":
-    case "md":
-    case "json":
-    case "js":
-    case "ts":
-    case "jsx":
-    case "tsx":
-    case "html":
-    case "css":
-    case "py":
-    case "java":
-    case "sql":
-      return "📝";
+      case "txt":
+      case "md":
+      case "json":
+      case "js":
+      case "ts":
+      case "jsx":
+      case "tsx":
+      case "html":
+      case "css":
+      case "py":
+      case "java":
+      case "sql":
+        return "📝";
 
-    default:
-      return "📁";
+      default:
+        return "📁";
+    }
   }
-}
 
   async function getTemporaryFileUrl(fileId: number) {
     const response = await api.get<{ url: string }>(`/files/${fileId}/download`);
@@ -286,9 +287,16 @@ export function FilePanel({
         <div className="section-header compact-section-header file-panel-header">
           <div>
             <h2>{selectedFolder.name}</h2>
-            <p className="muted">
-              Adicione, visualize e gerencie os arquivos desta pasta.
-            </p>
+
+            {isSharedFolder ? (
+              <p className="muted file-panel-shared-note">
+                Compartilhada por {folderMeta?.ownerName || "outro usuário"}
+              </p>
+            ) : (
+              <p className="muted">
+                Adicione, visualize e gerencie os arquivos desta pasta.
+              </p>
+            )}
           </div>
 
           <div className="file-panel-controls">
@@ -334,9 +342,9 @@ export function FilePanel({
         </div>
 
         <UploadFileForm
-         disabled={!selectedFolder}
-         profile={profile} 
-         onUpload={onUpload} 
+          disabled={!selectedFolder || isSharedFolder}
+          profile={profile}
+          onUpload={onUpload}
         />
 
         <div className="file-toolbar">
@@ -349,7 +357,7 @@ export function FilePanel({
           />
         </div>
 
-        {selectedFileIds.length > 0 && (
+        {!isSharedFolder && selectedFileIds.length > 0 && (
           <div className="file-bulk-actions">
             <div>
               <strong>{selectedFileIds.length} arquivo(s) selecionado(s)</strong>
@@ -408,23 +416,31 @@ export function FilePanel({
                   key={file.id}
                   className={`file-item mobile-file-item ${
                     isSelected ? "file-item-selected" : ""
-                  } ${viewMode === "grid" ? "file-item-grid" : ""}`}
-                  draggable
+                  } ${viewMode === "grid" ? "file-item-grid" : ""} ${
+                    isSharedFolder ? "file-item-readonly" : 
+                    ""
+                  }`}
+                  draggable={!isSharedFolder}
                   onDragStart={(e) => {
+                    if (isSharedFolder) return;
+
                     e.dataTransfer.setData("text/plain", String(file.id));
                     e.dataTransfer.effectAllowed = "move";
                     onStartDraggingFile(file.id);
                   }}
                   onDragEnd={onEndDraggingFile}
                 >
-                  <div className="file-selection">
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => onToggleFileSelection(file.id)}
-                      aria-label={`Selecionar ${file.name}`}
-                    />
-                  </div>
+                  {!isSharedFolder && (
+                    <div className="file-selection">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => onToggleFileSelection(file.id)}
+                        aria-label={`Selecionar ${file.name}`}
+                      />
+                    </div>
+                  )}
+
 
                   <div className="file-info">
                     <div className="file-meta">
@@ -465,38 +481,44 @@ export function FilePanel({
                           : "Abrir em nova aba"}
                       </button>
 
-                      <button
-                        className={`link-button ${
-                          copiedShareId === file.id ? "link-button-success" : ""
-                        }`}
-                        onClick={() => handleShare(file)}
-                        disabled={loadingShareId === file.id}
-                        title={!isPro ? "Disponível apenas no plano PRO" : ""}
-                      >
-                        {!isPro
-                          ? "Compartilhar (PRO)"
-                          : loadingShareId === file.id
-                          ? "Copiando..."
-                          : copiedShareId === file.id
-                          ? "Copiado"
-                          : "Compartilhar"}
-                      </button>
+                      {!isSharedFolder && (
+                        <>
+                          <button
+                            className={`link-button ${
+                              copiedShareId === file.id ? "link-button-success" : ""
+                            }`}
+                            onClick={() => handleShare(file)}
+                            disabled={loadingShareId === file.id}
+                            title={!isPro ? "Disponível apenas no plano PRO" : ""}
+                          >
+                            {!isPro
+                              ? "Compartilhar (PRO)"
+                              : loadingShareId === file.id
+                              ? "Copiando..."
+                              : copiedShareId === file.id
+                              ? "Copiado"
+                              : "Compartilhar"}
+                          </button>
 
-                      <button
-                        className="link-button"
-                        onClick={() => onEditFile(file)}
-                      >
-                        Renomear
-                      </button>
+                          <button
+                            className="link-button"
+                            onClick={() => onEditFile(file)}
+                          >
+                            Renomear
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
 
-                  <button
-                    className="danger-button small file-delete-button"
-                    onClick={() => onDeleteFile(file)}
-                  >
-                    Excluir
-                  </button>
+                  {!isSharedFolder && (
+                    <button
+                      className="danger-button small file-delete-button"
+                      onClick={() => onDeleteFile(file)}
+                    >
+                      Excluir
+                    </button>
+                  )}
                 </div>
               );
             })}

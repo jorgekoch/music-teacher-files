@@ -6,6 +6,8 @@ export type LoginData = {
 export type Folder = {
   id: number;
   name: string;
+  ownerName?: string;
+  shareCount?: number;
 };
 
 export type FileItem = {

@@ -12,6 +12,8 @@ import { ProfileDialog } from "../components/ProfileDialog";
 import { OnboardingCard } from "../components/OnboardingCard";
 import { useAuth } from "../hooks/useAuth";
 import { createProCheckoutSession } from "../services/billingService";
+import { ShareFolderDialog } from "../components/ShareFolderDialog";
+import { getFolderShares, getSharedFolders, removeFolderShare, shareFolder, shareFolder as shareFolderRequest } from "../services/folderShareService";
 
 const SELECTED_FOLDER_STORAGE_KEY = "Arquivapp:selectedFolderId";
 const ONBOARDING_DISMISSED_STORAGE_KEY = "Arquivapp:onboardingDismissed";
@@ -55,10 +57,36 @@ export function DashboardPage() {
   const [selectedFileIds, setSelectedFileIds] = useState<number[]>([]);
   const [draggingFileId, setDraggingFileId] = useState<number | null>(null);
 
-  const selectedFolder = useMemo(
-    () => folders.find((folder) => folder.id === selectedFolderId) || null,
-    [folders, selectedFolderId]
-  );
+  const [folderToShare, setFolderToShare] = useState<Folder | null>(null);
+  const [sharedFolders, setSharedFolders] = useState<
+    { id: number; name: string; ownerName?: string }[]
+  >([]);
+  const [folderShares, setFolderShares] = useState<
+    { id: number; email: string; role: "viewer" | "editor" }[]
+  >([]);
+
+  const [selectedFolderMeta, setSelectedFolderMeta] = useState<{isShared: boolean; ownerName?: string} | null>(null);
+
+  const selectedFolder = useMemo(() => {
+    const ownedFolder =
+      folders.find((folder) => folder.id === selectedFolderId) || null;
+
+    if (ownedFolder) {
+      return ownedFolder;
+    }
+
+    const sharedFolder =
+      sharedFolders.find((folder) => folder.id === selectedFolderId) || null;
+
+    if (sharedFolder) {
+      return {
+        id: sharedFolder.id,
+        name: sharedFolder.name,
+      };
+    }
+
+  return null;
+}, [folders, sharedFolders, selectedFolderId]);
 
   function saveSelectedFolderId(folderId: number | null) {
     if (folderId === null) {
@@ -232,6 +260,24 @@ export function DashboardPage() {
 
       applyDashboardData(data);
       saveDashboardCache(data);
+      const initialOwnedFolder =
+        data.folders.find((folder) => folder.id === data.selectedFolderId) || null;
+
+      if (initialOwnedFolder) {
+        setSelectedFolderMeta({ isShared: false });
+      } else {
+        const initialSharedFolder =
+          sharedFolders.find((folder) => folder.id === data.selectedFolderId) || null;
+
+        if (initialSharedFolder) {
+          setSelectedFolderMeta({
+            isShared: true,
+            ownerName: initialSharedFolder.ownerName,
+          });
+        } else {
+          setSelectedFolderMeta(null);
+        }
+      }
     } catch (err: any) {
       console.error("Erro real no loadInitialDashboard:", err);
       console.error("Resposta do backend: ", err?.response?.status);
@@ -249,6 +295,22 @@ export function DashboardPage() {
     setSelectedFolderId(folderId);
     saveSelectedFolderId(folderId);
     setSelectedFileIds([]);
+
+    const ownedFolder = folders.find((folder) => folder.id === folderId);
+
+    if (ownedFolder) {
+      setSelectedFolderMeta({
+        isShared: false,
+      });
+    } else {
+      const sharedFolder = sharedFolders.find((folder) => folder.id === folderId);
+
+      setSelectedFolderMeta({
+        isShared: true,
+        ownerName: sharedFolder?.ownerName,
+      });
+    }
+
     await fetchFiles(folderId);
   }
 
@@ -280,9 +342,85 @@ export function DashboardPage() {
     setFilesToDelete(selectedFiles);
   }
 
+  async function handleShareFolder(folder: Folder) {
+    if (profile?.plan !== "PRO") {
+      toast("Compartilhamento de pastas é um recurso do plano PRO.");
+      return;
+    }
+
+    try {
+      const response = await getFolderShares(folder.id);
+
+      const mappedShares = response.map((item) => ({
+        id: item.id,
+        email: item.user.email,
+        role: item.role,
+      }));
+
+      setFolderShares(mappedShares);
+      setFolderToShare(folder);
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.error ||
+          "Erro ao carregar compartilhamentos da pasta"
+      );
+    }
+  }
+
+  async function handleInviteToFolder(folderId: number, email: string) {
+    try {
+      await shareFolder(folderId, email);
+      toast.success(`Convite enviado para ${email}.`);
+
+      const response = await getFolderShares(folderId);
+
+      const mappedShares = response.map((item) => ({
+        id: item.id,
+        email: item.user.email,
+        role: item.role,
+      }));
+
+      setFolderShares(mappedShares);
+      await loadSharedFolders();
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.error || "Erro ao compartilhar pasta"
+      );
+    }
+  }
+
   useEffect(() => {
     loadInitialDashboard();
+    loadSharedFolders();
   }, []);
+
+  useEffect(() => {
+    if (!selectedFolderId) {
+      setSelectedFolderMeta(null);
+      return;
+    }
+
+    const ownedFolder = folders.find((folder) => folder.id === selectedFolderId);
+
+    if (ownedFolder) {
+      setSelectedFolderMeta({ isShared: false });
+      return;
+    }
+
+    const sharedFolder = sharedFolders.find(
+      (folder) => folder.id === selectedFolderId
+    );
+
+    if (sharedFolder) {
+      setSelectedFolderMeta({
+        isShared: true,
+        ownerName: sharedFolder.ownerName,
+      });
+      return;
+    }
+
+    setSelectedFolderMeta(null);
+  }, [selectedFolderId, folders, sharedFolders]);
 
   useEffect(() => {
     const hasFolders = folders.length > 0;
@@ -541,100 +679,157 @@ export function DashboardPage() {
     }
   }
 
+  async function loadSharedFolders() {
+    try {
+      const response = await getSharedFolders();
+
+      const mappedSharedFolders = response.map((item) => ({
+        id: item.folder.id,
+        name: item.folder.name,
+        ownerName: item.owner.name,
+      }));
+
+      setSharedFolders(mappedSharedFolders);
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.error || "Erro ao carregar pastas compartilhadas"
+      );
+    }
+  }
+
+  async function handleRemoveFolderAccess(shareId: number) {
+    if (!folderToShare) return;
+
+    try {
+      await removeFolderShare(shareId);
+      toast.success("Acesso removido com sucesso.");
+
+      const response = await getFolderShares(folderToShare.id);
+
+      const mappedShares = response.map((item) => ({
+        id: item.id,
+        email: item.user.email,
+        role: item.role,
+      }));
+
+      setFolderShares(mappedShares);
+      await loadSharedFolders();
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.error || "Erro ao remover acesso"
+      );
+    }
+  }
+
   return (
-    <Layout
-      profile={profile}
-      onProfileClick={() => setProfileOpen(true)}
-      onLogout={logout}
-    >
-      <OnboardingCard
-        open={showOnboarding}
-        onCreateFolderClick={handleStartOnboarding}
-        onDismiss={dismissOnboarding}
-      />
+  <Layout
+    profile={profile}
+    onProfileClick={() => setProfileOpen(true)}
+    onLogout={logout}
+  >
+    <OnboardingCard
+      open={showOnboarding}
+      onCreateFolderClick={handleStartOnboarding}
+      onDismiss={dismissOnboarding}
+    />
 
-      <div ref={createFolderSectionRef} className="dashboard-grid">
-        <FolderSidebar
-          folders={folders}
-          selectedFolderId={selectedFolderId}
-          loading={loadingFolders}
-          profile={profile}
-          onCreateFolder={handleCreateFolder}
-          onSelectFolder={handleSelectFolder}
-          onEditFolder={setFolderToEdit}
-          onDeleteFolder={setFolderToDelete}
-          draggingFileId={draggingFileId}
-          onDropFileOnFolder={handleMoveFile}
-          onUpgradeClick={handleUpgradeToPro}
-        />
-
-        <FilePanel
-          selectedFolder={selectedFolder}
-          files={files}
-          loading={loadingFiles}
-          profile={profile}
-          onUpload={handleUpload}
-          onEditFile={setFileToEdit}
-          onDeleteFile={setFileToDelete}
-          selectedFileIds={selectedFileIds}
-          onToggleFileSelection={handleToggleFileSelection}
-          onSelectAllFiles={handleSelectAllFiles}
-          onClearFileSelection={handleClearFileSelection}
-          onDeleteSelectedFiles={handleDeleteSelectedFiles}
-          onStartDraggingFile={setDraggingFileId}
-          onEndDraggingFile={() => setDraggingFileId(null)}
-        />
-      </div>
-
-      <EditFolderDialog
-        open={Boolean(folderToEdit)}
-        folder={folderToEdit}
-        onCancel={() => setFolderToEdit(null)}
-        onConfirm={handleUpdateFolder}
-      />
-
-      <EditFileDialog
-        open={Boolean(fileToEdit)}
-        file={fileToEdit}
-        onCancel={() => setFileToEdit(null)}
-        onConfirm={handleUpdateFile}
-      />
-
-      <ConfirmDialog
-        open={Boolean(folderToDelete)}
-        title="Excluir pasta"
-        description={`Tem certeza que deseja excluir a pasta "${folderToDelete?.name}"?`}
-        confirmText="Excluir pasta"
-        onCancel={() => setFolderToDelete(null)}
-        onConfirm={confirmDeleteFolder}
-      />
-
-      <ConfirmDialog
-        open={Boolean(fileToDelete)}
-        title="Excluir arquivo"
-        description={`Tem certeza que deseja excluir o arquivo "${fileToDelete?.name}"?`}
-        confirmText="Excluir arquivo"
-        onCancel={() => setFileToDelete(null)}
-        onConfirm={confirmDeleteFile}
-      />
-
-      <ConfirmDialog
-        open={filesToDelete.length > 0}
-        title="Excluir arquivos selecionados"
-        description={`Tem certeza que deseja excluir ${filesToDelete.length} arquivo(s) selecionado(s)?`}
-        confirmText="Excluir arquivos"
-        onCancel={() => setFilesToDelete([])}
-        onConfirm={confirmDeleteSelectedFiles}
-      />
-
-      <ProfileDialog
-        open={profileOpen}
+    <div ref={createFolderSectionRef} className="dashboard-grid">
+      <FolderSidebar
+        folders={folders}
+        sharedFolders={sharedFolders}
+        selectedFolderId={selectedFolderId}
+        loading={loadingFolders}
         profile={profile}
-        onClose={() => setProfileOpen(false)}
-        onUpdateProfile={handleUpdateProfile}
-        onUpdatePassword={handleUpdatePassword}
-        onUpdateAvatar={handleUpdateAvatar}
+        onCreateFolder={handleCreateFolder}
+        onSelectFolder={handleSelectFolder}
+        onEditFolder={setFolderToEdit}
+        onDeleteFolder={setFolderToDelete}
+        onShareFolder={handleShareFolder}
+        draggingFileId={draggingFileId}
+        onDropFileOnFolder={handleMoveFile}
+        onUpgradeClick={handleUpgradeToPro}
       />
-    </Layout>
-  );
+
+      <FilePanel
+        selectedFolder={selectedFolder}
+        folderMeta={selectedFolderMeta}
+        files={files}
+        loading={loadingFiles}
+        profile={profile}
+        onUpload={handleUpload}
+        onEditFile={setFileToEdit}
+        onDeleteFile={setFileToDelete}
+        selectedFileIds={selectedFileIds}
+        onToggleFileSelection={handleToggleFileSelection}
+        onSelectAllFiles={handleSelectAllFiles}
+        onClearFileSelection={handleClearFileSelection}
+        onDeleteSelectedFiles={handleDeleteSelectedFiles}
+        onStartDraggingFile={setDraggingFileId}
+        onEndDraggingFile={() => setDraggingFileId(null)}
+      />
+    </div>
+
+    <EditFolderDialog
+      open={Boolean(folderToEdit)}
+      folder={folderToEdit}
+      onCancel={() => setFolderToEdit(null)}
+      onConfirm={handleUpdateFolder}
+    />
+
+    <EditFileDialog
+      open={Boolean(fileToEdit)}
+      file={fileToEdit}
+      onCancel={() => setFileToEdit(null)}
+      onConfirm={handleUpdateFile}
+    />
+
+    <ConfirmDialog
+      open={Boolean(folderToDelete)}
+      title="Excluir pasta"
+      description={`Tem certeza que deseja excluir a pasta "${folderToDelete?.name}"?`}
+      confirmText="Excluir pasta"
+      onCancel={() => setFolderToDelete(null)}
+      onConfirm={confirmDeleteFolder}
+    />
+
+    <ConfirmDialog
+      open={Boolean(fileToDelete)}
+      title="Excluir arquivo"
+      description={`Tem certeza que deseja excluir o arquivo "${fileToDelete?.name}"?`}
+      confirmText="Excluir arquivo"
+      onCancel={() => setFileToDelete(null)}
+      onConfirm={confirmDeleteFile}
+    />
+
+    <ConfirmDialog
+      open={filesToDelete.length > 0}
+      title="Excluir arquivos selecionados"
+      description={`Tem certeza que deseja excluir ${filesToDelete.length} arquivo(s) selecionado(s)?`}
+      confirmText="Excluir arquivos"
+      onCancel={() => setFilesToDelete([])}
+      onConfirm={confirmDeleteSelectedFiles}
+    />
+
+    <ProfileDialog
+      open={profileOpen}
+      profile={profile}
+      onClose={() => setProfileOpen(false)}
+      onUpdateProfile={handleUpdateProfile}
+      onUpdatePassword={handleUpdatePassword}
+      onUpdateAvatar={handleUpdateAvatar}
+    />
+
+    <ShareFolderDialog
+      open={Boolean(folderToShare)}
+      folder={folderToShare}
+      sharedPeople={folderShares}
+      onClose={() => {
+        setFolderToShare(null);
+        setFolderShares([]);
+      }}
+      onInvite={handleInviteToFolder}
+      onRemoveAccess={handleRemoveFolderAccess}
+    />
+  </Layout>
+);
 }
