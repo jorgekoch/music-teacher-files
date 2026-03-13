@@ -20,7 +20,7 @@ export async function createProCheckoutSession() {
     "/billing/checkout-session"
   );
 
-  return response.data;
+  return response.data.url;
 }
 
 export async function getCheckoutSessionStatus(sessionId: string) {
@@ -36,5 +36,5 @@ export async function createCustomerPortalSession() {
     "/billing/customer-portal"
   );
 
-  return response.data;
+  return response.data.url;
 }
