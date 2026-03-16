@@ -1,4 +1,7 @@
+import dotenv from "dotenv";
 import { Resend } from "resend";
+
+dotenv.config();
 
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
@@ -8,6 +11,26 @@ function getResendClient() {
   }
 
   return new Resend(apiKey);
+}
+
+function getDefaultFromEmail() {
+  const from = process.env.EMAIL_FROM;
+
+  if (!from) {
+    throw new Error("EMAIL_FROM não está configurado.");
+  }
+
+  return from;
+}
+
+function getMarketingFromEmail() {
+  const from = process.env.EMAIL_FROM_MARKETING;
+
+  if (!from) {
+    throw new Error("EMAIL_FROM_MARKETING não está configurado.");
+  }
+
+  return from;
 }
 
 type SendPasswordResetEmailParams = {
@@ -21,16 +44,94 @@ type SendSupportMessageEmailParams = {
   message: string;
 };
 
+type SendPromotionalEmailParams = {
+  to: string;
+  subject: string;
+  userName?: string;
+  couponCode: string;
+  discountText: string;
+  ctaUrl: string;
+  expiresText: string;
+};
+
+type SendBulkPromotionalEmailParams = {
+  recipients: Array<{
+    email: string;
+    name?: string | null;
+  }>;
+  subject: string;
+  couponCode: string;
+  discountText: string;
+  ctaUrl: string;
+  expiresText: string;
+};
+
+function buildPromotionalEmailHtml({
+  userName,
+  couponCode,
+  discountText,
+  ctaUrl,
+  expiresText,
+}: Omit<SendPromotionalEmailParams, "to" | "subject">) {
+  const greeting = userName?.trim() ? `Olá, ${userName}!` : "Olá!";
+
+  return `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827; max-width: 640px; margin: 0 auto; padding: 24px;">
+      <h2 style="margin-bottom: 12px;">${greeting}</h2>
+
+      <p>Quero começar dizendo <strong>muito obrigado por usar o Arquivapp</strong>.</p>
+
+      <p>
+        Seu apoio nas primeiras fases do projeto faz toda a diferença. Estou trabalhando
+        constantemente para melhorar a plataforma e adicionar novos recursos para facilitar
+        a organização e o compartilhamento de arquivos.
+      </p>
+
+      <p>
+        Como forma de agradecimento, preparei <strong>${discountText}</strong> no plano PRO.
+      </p>
+
+      <div style="margin: 20px 0; padding: 16px; border: 1px solid #e5e7eb; border-radius: 10px; background: #f9fafb;">
+        <p style="margin: 0 0 8px;"><strong>Cupom:</strong></p>
+        <p style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.04em; color: #2563eb;">
+          ${couponCode}
+        </p>
+      </div>
+
+      <p><strong>Validade:</strong> ${expiresText}</p>
+
+      <p style="margin: 24px 0;">
+        <a
+          href="${ctaUrl}"
+          style="display: inline-block; background: #2563eb; color: white; padding: 12px 18px; text-decoration: none; border-radius: 8px; font-weight: 700;"
+        >
+          Atualizar para PRO
+        </a>
+      </p>
+
+      <p>
+        Se tiver qualquer sugestão ou feedback sobre o Arquivapp, eu adoraria ouvir.
+        Seu retorno ajuda muito a melhorar o produto.
+      </p>
+
+      <p style="margin-top: 24px;">
+        Obrigado novamente por fazer parte dessa fase inicial do Arquivapp.
+      </p>
+
+      <p style="margin-top: 24px;">
+        Abraço,<br />
+        <strong>Jorge</strong><br />
+        Fundador do Arquivapp
+      </p>
+    </div>
+  `;
+}
+
 export async function sendPasswordResetEmail({
   to,
   resetLink,
 }: SendPasswordResetEmailParams) {
-  const from = process.env.EMAIL_FROM;
-
-  if (!from) {
-    throw new Error("EMAIL_FROM não está configurado.");
-  }
-
+  const from = getDefaultFromEmail();
   const resend = getResendClient();
 
   const { error } = await resend.emails.send({
@@ -65,12 +166,8 @@ export async function sendSupportMessageEmail({
   userEmail,
   message,
 }: SendSupportMessageEmailParams) {
-  const from = process.env.EMAIL_FROM;
+  const from = getDefaultFromEmail();
   const supportEmail = process.env.SUPPORT_EMAIL;
-
-  if (!from) {
-    throw new Error("EMAIL_FROM não está configurado.");
-  }
 
   if (!supportEmail) {
     throw new Error("SUPPORT_EMAIL não está configurado.");
@@ -99,5 +196,59 @@ export async function sendSupportMessageEmail({
   if (error) {
     console.error("Erro ao enviar mensagem de suporte com Resend:", error);
     throw new Error("Erro ao enviar mensagem de suporte");
+  }
+}
+
+export async function sendPromotionalEmail({
+  to,
+  subject,
+  userName,
+  couponCode,
+  discountText,
+  ctaUrl,
+  expiresText,
+}: SendPromotionalEmailParams) {
+  const from = getMarketingFromEmail();
+  const resend = getResendClient();
+
+  const { error } = await resend.emails.send({
+    from,
+    to,
+    subject,
+    html: buildPromotionalEmailHtml({
+      userName,
+      couponCode,
+      discountText,
+      ctaUrl,
+      expiresText,
+    }),
+  });
+
+  if (error) {
+    console.error("Erro ao enviar email promocional com Resend:", error);
+    throw new Error("Erro ao enviar email promocional");
+  }
+}
+
+export async function sendBulkPromotionalEmail({
+  recipients,
+  subject,
+  couponCode,
+  discountText,
+  ctaUrl,
+  expiresText,
+}: SendBulkPromotionalEmailParams) {
+  for (const recipient of recipients) {
+    await sendPromotionalEmail({
+      to: recipient.email,
+      subject,
+      userName: recipient.name ?? undefined,
+      couponCode,
+      discountText,
+      ctaUrl,
+      expiresText,
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
   }
 }

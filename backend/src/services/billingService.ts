@@ -60,6 +60,9 @@ export async function createCheckoutSession(userId: number) {
         quantity: 1,
       },
     ],
+
+    allow_promotion_codes: true,
+    
     success_url: `${process.env.FRONTEND_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.FRONTEND_URL}/`,
     metadata: {
