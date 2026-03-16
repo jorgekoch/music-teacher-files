@@ -14,7 +14,9 @@ import { useAuth } from "../hooks/useAuth";
 import { createProCheckoutSession } from "../services/billingService";
 import { ShareFolderDialog } from "../components/ShareFolderDialog";
 import { getFolderShares, getSharedFolders, removeFolderShare, shareFolder, shareFolder as shareFolderRequest } from "../services/folderShareService";
+import { UpgradeOfferDialog } from "../components/UpgradeOfferDialog";
 
+const UPGRADE_OFFER_DISMISSED_KEY = "Arquivapp:upgradeOfferDismissedAt";
 const SELECTED_FOLDER_STORAGE_KEY = "Arquivapp:selectedFolderId";
 const ONBOARDING_DISMISSED_STORAGE_KEY = "Arquivapp:onboardingDismissed";
 
@@ -67,6 +69,7 @@ export function DashboardPage() {
 
   const [selectedFolderMeta, setSelectedFolderMeta] = useState<{isShared: boolean; ownerName?: string} | null>(null);
   const [showProFeatureDialog, setShowProFeatureDialog] = useState(false);
+  const [showUpgradeOffer, setShowUpgradeOffer] = useState(false);
 
   const selectedFolder = useMemo(() => {
     const ownedFolder =
@@ -390,10 +393,34 @@ export function DashboardPage() {
     }
   }
 
+  function handleCloseUpgradeDialog() {
+    localStorage.setItem(UPGRADE_OFFER_DISMISSED_KEY, String(Date.now()));
+    setShowUpgradeOffer(false);
+  }
+
   useEffect(() => {
     loadInitialDashboard();
     loadSharedFolders();
   }, []);
+
+  useEffect(() => {
+    if (!profile || profile.plan !== "FREE") return;
+
+    const stored = localStorage.getItem(UPGRADE_OFFER_DISMISSED_KEY);
+    const now = Date.now();
+
+    if (!stored) {
+      setShowUpgradeOffer(true);
+      return;
+    }
+
+    const lastDismissedAt = Number(stored);
+    const oneDay = 24 * 60 * 60 * 1000;
+
+    if (Number.isNaN(lastDismissedAt) || now - lastDismissedAt > oneDay) {
+      setShowUpgradeOffer(true);
+    }
+  }, [profile]);
 
   useEffect(() => {
     if (!selectedFolderId) {
@@ -843,6 +870,11 @@ export function DashboardPage() {
       }}
       onInvite={handleInviteToFolder}
       onRemoveAccess={handleRemoveFolderAccess}
+    />
+    <UpgradeOfferDialog
+      open={showUpgradeOffer}
+      onClose={handleCloseUpgradeDialog}
+      onUpgrade={handleUpgradeToPro}
     />
   </Layout>
 );
