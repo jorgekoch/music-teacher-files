@@ -1,11 +1,11 @@
 {
   "routes": [
     {
-      "src": "^/assets/(.*)",
-      "dest": "/assets/$1"
+      "src": "^/(robots\\.txt|sitemap\\.xml)$",
+      "dest": "/$1"
     },
     {
-      "src": "^/(.*\\.(js|css|png|jpg|jpeg|svg|ico|json|webp))$",
+      "src": "^/(.*\\.(js|css|png|jpg|jpeg|svg|ico|webp|json))$",
       "dest": "/$1"
     },
     {
