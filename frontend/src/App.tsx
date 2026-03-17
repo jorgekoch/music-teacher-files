@@ -21,6 +21,10 @@ import { StoragePage } from "./pages/StoragePage";
 import { ShareFoldersPage } from "./pages/ShareFoldersPage";
 import { StoreDocumentsPage } from "./pages/StoreDocumentsPage";
 import { OrganizeCloudDocumentsPage } from "./pages/OrganizeCloudDocumentsPage";
+import { HowToOrganizeFilesCloudPage } from "./pages/HowToOrganizeFilesCloudPage";
+import { GoogleDriveAlternativePage } from "./pages/GoogleDriveAlternativePage";
+import { SeoTopicPage } from "./pages/SeoTopicPage";
+import { UseCasePage } from "./pages/UseCasePage";
 
 export default function App() {
   return (
@@ -49,6 +53,8 @@ export default function App() {
             <Route path="/compartilhar-pastas-online" element={<ShareFoldersPage />} />
             <Route path="/armazenar-documentos-online" element={<StoreDocumentsPage />} />
             <Route path="/organizar-arquivos-na-nuvem" element={<OrganizeCloudDocumentsPage />} />
+            <Route path="/como-organizar-arquivos-na-nuvem" element={<HowToOrganizeFilesCloudPage />} />
+            <Route path="/alternativa-google-drive" element={<GoogleDriveAlternativePage />} />
 
             <Route
               path="/login"
@@ -97,7 +103,12 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
+            <Route path="/:slug" element={<SeoTopicPage />} />
+            <Route path="/uso/:slug" element={<UseCasePage />} />
+
           </Routes>
+          
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>

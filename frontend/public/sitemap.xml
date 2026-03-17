@@ -62,5 +62,58 @@
     <priority>0.9</priority>
   </url>
 
+  <url>
+    <loc>https://arquivapp.com.br/como-organizar-arquivos-na-nuvem</loc>
+    <priority>0.8</priority>
+  </url>
 
+  <url>
+    <loc>https://arquivapp.com.br/alternativa-google-drive</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://arquivapp.com.br/armazenar-pdf-online</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://arquivapp.com.br/guardar-documentos-importantes-online</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://arquivapp.com.br/organizar-arquivos-de-trabalho</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://arquivapp.com.br/armazenar-contratos-online</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://arquivapp.com.br/compartilhar-documentos-online</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://arquivapp.com.br/uso/arquivos-para-estudantes</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://arquivapp.com.br/uso/documentos-para-pequenos-negocios</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://arquivapp.com.br/uso/guardar-contratos-de-clientes</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://arquivapp.com.br/uso/organizar-materiais-de-estudo</loc>
+    <priority>0.8</priority>
+  </url>
 </urlset>

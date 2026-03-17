@@ -41,3 +41,25 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* SEO BREADCRUMBS */
+
+.seo-breadcrumbs {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.seo-breadcrumbs a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.seo-breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+.seo-breadcrumbs__current {
+  color: var(--text);
+  font-weight: 600;
+}
