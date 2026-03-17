@@ -25,6 +25,12 @@ type Props = {
   children: React.ReactNode;
 };
 
+function clearStoredSession() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  sessionStorage.removeItem(DASHBOARD_CACHE_KEY);
+}
+
 export function AuthProvider({ children }: Props) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<Profile | null>(null);
@@ -34,19 +40,56 @@ export function AuthProvider({ children }: Props) {
     const storedToken = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
 
-    if (storedToken) {
-      setToken(storedToken);
+    if (!storedToken) {
+      clearStoredSession();
+      setIsAuthLoading(false);
+      return;
     }
+
+    setToken(storedToken);
 
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
       } catch {
-        localStorage.removeItem("user");
+        clearStoredSession();
+        setToken(null);
+        setUser(null);
       }
     }
 
     setIsAuthLoading(false);
+  }, []);
+
+  useEffect(() => {
+    function handleStorageChange(event: StorageEvent) {
+      if (event.key === "token" && !event.newValue) {
+        setToken(null);
+        setUser(null);
+        sessionStorage.removeItem(DASHBOARD_CACHE_KEY);
+      }
+
+      if (event.key === "user") {
+        if (!event.newValue) {
+          setUser(null);
+          return;
+        }
+
+        try {
+          setUser(JSON.parse(event.newValue));
+        } catch {
+          clearStoredSession();
+          setToken(null);
+          setUser(null);
+        }
+      }
+    }
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   async function login(data: LoginData) {
@@ -63,10 +106,7 @@ export function AuthProvider({ children }: Props) {
   }
 
   function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    sessionStorage.removeItem(DASHBOARD_CACHE_KEY);
-
+    clearStoredSession();
     setToken(null);
     setUser(null);
   }
