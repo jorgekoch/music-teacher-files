@@ -1,4 +1,6 @@
 import { AppError } from "../errors/AppError";
+import crypto from "crypto";
+import { createFolderShareInvite, findFolderShareInviteByToken, findPendingInvitesByEmail, markFolderShareInviteAsAccepted } from "../repositories/folderShareInviteRepository";
 import {
   createFolderShare,
   deleteFolderShare,
@@ -10,6 +12,7 @@ import {
   findUserByEmail,
 } from "../repositories/folderShareRepository";
 import { findUserById } from "../repositories/userRepository";
+import { sendFolderInviteEmail, sendFolderInviteLinkEmail } from "./emailService";
 
 export async function shareFolder(params: {
   currentUserId: number;
@@ -38,7 +41,10 @@ export async function shareFolder(params: {
   }
 
   if (folder.userId !== currentUserId) {
-    throw new AppError("Você não tem permissão para compartilhar esta pasta", 403);
+    throw new AppError(
+      "Você não tem permissão para compartilhar esta pasta",
+      403
+    );
   }
 
   const normalizedEmail = email.trim().toLowerCase();
@@ -49,44 +55,84 @@ export async function shareFolder(params: {
 
   const targetUser = await findUserByEmail(normalizedEmail);
 
-  if (!targetUser) {
-    throw new AppError(
-      "Não foi encontrado nenhum usuário com este e-mail",
-      404
+  const loginUrl = `${process.env.FRONTEND_URL}/login`;
+
+  // CASO 1: usuário já existe
+  if (targetUser) {
+    if (targetUser.id === currentUserId) {
+      throw new AppError(
+        "Você não pode compartilhar uma pasta com você mesmo",
+        400
+      );
+    }
+
+    const existingShare = await findFolderShareByFolderAndUser(
+      folderId,
+      targetUser.id
     );
+
+    if (existingShare) {
+      throw new AppError(
+        "Esta pasta já foi compartilhada com este usuário",
+        409
+      );
+    }
+
+    const share = await createFolderShare({
+      folderId,
+      ownerUserId: currentUserId,
+      sharedWithUserId: targetUser.id,
+      role: "viewer",
+    });
+
+    try {
+      await sendFolderInviteEmail({
+        to: targetUser.email,
+        invitedUserName: targetUser.name,
+        ownerName: currentUser.name,
+        folderName: share.folder.name,
+        loginUrl,
+      });
+    } catch (error) {
+      console.error("Erro ao enviar email (usuário existente):", error);
+    }
+
+    return {
+      message: "Pasta compartilhada com sucesso",
+      shareId: share.id,
+      invitedUserExists: true,
+    };
   }
 
-  if (targetUser.id === currentUserId) {
-    throw new AppError("Você não pode compartilhar uma pasta com você mesmo", 400);
-  }
+  // CASO 2: usuário ainda não existe
+  const token = crypto.randomBytes(24).toString("hex");
 
-  const existingShare = await findFolderShareByFolderAndUser(
-    folderId,
-    targetUser.id
-  );
-
-  if (existingShare) {
-    throw new AppError("Esta pasta já foi compartilhada com este usuário", 409);
-  }
-
-  const share = await createFolderShare({
+  const invite = await createFolderShareInvite({
+    token,
     folderId,
     ownerUserId: currentUserId,
-    sharedWithUserId: targetUser.id,
+    invitedEmail: normalizedEmail,
     role: "viewer",
+    expiresAt: null,
   });
 
+  const inviteUrl = `${process.env.FRONTEND_URL}/invite/${invite.token}`;
+
+  try {
+    await sendFolderInviteLinkEmail({
+      to: normalizedEmail,
+      ownerName: currentUser.name,
+      folderName: folder.name,
+      inviteUrl,
+    });
+  } catch (error) {
+    console.error("Erro ao enviar convite para novo usuário:", error);
+  }
+
   return {
-    id: share.id,
-    folderId: share.folderId,
-    folderName: share.folder.name,
-    sharedWithUser: {
-      id: share.sharedWithUser.id,
-      name: share.sharedWithUser.name,
-      email: share.sharedWithUser.email,
-    },
-    role: share.role,
-    createdAt: share.createdAt,
+    message: "Convite enviado por e-mail para o usuário",
+    inviteToken: invite.token,
+    invitedUserExists: false,
   };
 }
 
@@ -172,4 +218,89 @@ export async function removeFolderShare(params: {
   return {
     message: "Compartilhamento removido com sucesso",
   };
+}
+
+export async function getFolderInviteByToken(token: string) {
+  const invite = await findFolderShareInviteByToken(token);
+
+  if (!invite) {
+    throw new AppError("Convite não encontrado", 404);
+  }
+
+  if (invite.acceptedAt) {
+    throw new AppError("Este convite já foi aceito", 400);
+  }
+
+  return {
+    token: invite.token,
+    folderName: invite.folder.name,
+    ownerName: invite.ownerUser.name,
+    invitedEmail: invite.invitedEmail,
+    createdAt: invite.createdAt,
+  };
+}
+
+export async function acceptFolderInvite(token: string, userId: number) {
+  const invite = await findFolderShareInviteByToken(token);
+
+  if (!invite) {
+    throw new AppError("Convite não encontrado", 404);
+  }
+
+  if (invite.acceptedAt) {
+    throw new AppError("Este convite já foi aceito", 400);
+  }
+
+  const user = await findUserById(userId);
+
+  if (!user) {
+    throw new AppError("Usuário não encontrado", 404);
+  }
+
+  if (user.email.trim().toLowerCase() !== invite.invitedEmail.trim().toLowerCase()) {
+    throw new AppError("Este convite pertence a outro e-mail", 403);
+  }
+
+  const existingShare = await findFolderShareByFolderAndUser(invite.folderId, user.id);
+
+  if (!existingShare) {
+    await createFolderShare({
+      folderId: invite.folderId,
+      ownerUserId: invite.ownerUserId,
+      sharedWithUserId: user.id,
+      role: invite.role,
+    });
+  }
+
+  await markFolderShareInviteAsAccepted(invite.id);
+
+  return {
+    message: "Convite aceito com sucesso",
+    folderId: invite.folderId,
+  };
+}
+
+export async function acceptPendingFolderInvitesForUser(
+  userId: number,
+  email: string
+) {
+  const invites = await findPendingInvitesByEmail(email.trim().toLowerCase());
+
+  for (const invite of invites) {
+    const existingShare = await findFolderShareByFolderAndUser(
+      invite.folderId,
+      userId
+    );
+
+    if (!existingShare) {
+      await createFolderShare({
+        folderId: invite.folderId,
+        ownerUserId: invite.ownerUserId,
+        sharedWithUserId: userId,
+        role: invite.role,
+      });
+    }
+
+    await markFolderShareInviteAsAccepted(invite.id);
+  }
 }

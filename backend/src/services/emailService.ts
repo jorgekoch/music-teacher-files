@@ -252,3 +252,183 @@ export async function sendBulkPromotionalEmail({
     await new Promise((resolve) => setTimeout(resolve, 300));
   }
 }
+
+type SendFolderInviteEmailParams = {
+  to: string;
+  invitedUserName?: string | null;
+  ownerName: string;
+  folderName: string;
+  loginUrl: string;
+};
+
+export async function sendFolderInviteEmail({
+  to,
+  invitedUserName,
+  ownerName,
+  folderName,
+  loginUrl,
+}: SendFolderInviteEmailParams) {
+  const from = getMarketingFromEmail();
+  const resend = getResendClient();
+
+  const greeting = invitedUserName?.trim()
+    ? `Olá, ${invitedUserName}!`
+    : "Olá!";
+
+  const { error } = await resend.emails.send({
+    from,
+    to,
+    subject: `${ownerName} compartilhou uma pasta com você no Arquivapp`,
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827; max-width: 640px; margin: 0 auto; padding: 24px;">
+        <h2 style="margin-bottom: 12px;">${greeting}</h2>
+
+        <p>
+          <strong>${ownerName}</strong> compartilhou uma pasta com você no Arquivapp.
+        </p>
+
+        <div style="margin: 20px 0; padding: 16px; border: 1px solid #e5e7eb; border-radius: 10px; background: #f9fafb;">
+          <p style="margin: 0 0 8px;"><strong>Pasta compartilhada:</strong></p>
+          <p style="margin: 0; font-size: 18px; font-weight: 700; color: #2563eb;">
+            ${folderName}
+          </p>
+        </div>
+
+        <p>
+          Faça login no Arquivapp para acessar a pasta compartilhada.
+        </p>
+
+        <p style="margin: 24px 0;">
+          <a
+            href="${loginUrl}"
+            style="display: inline-block; background: #2563eb; color: white; padding: 12px 18px; text-decoration: none; border-radius: 8px; font-weight: 700;"
+          >
+            Acessar o Arquivapp
+          </a>
+        </p>
+
+        <p>
+          Se você ainda não entrou na sua conta recentemente, basta fazer login
+          para visualizar a pasta na área de compartilhamentos.
+        </p>
+
+        <p style="margin-top: 24px;">
+          Abraço,<br />
+          <strong>Equipe Arquivapp</strong>
+        </p>
+      </div>
+    `,
+  });
+
+  if (error) {
+    console.error("Erro ao enviar convite de pasta com Resend:", error);
+    throw new Error("Erro ao enviar convite de pasta");
+  }
+}
+
+type SendFolderInviteLinkEmailParams = {
+  to: string;
+  ownerName: string;
+  folderName: string;
+  inviteUrl: string;
+};
+
+export async function sendFolderInviteLinkEmail({
+  to,
+  ownerName,
+  folderName,
+  inviteUrl,
+}: SendFolderInviteLinkEmailParams) {
+  const from = getMarketingFromEmail();
+  const resend = getResendClient();
+
+  const { error } = await resend.emails.send({
+    from,
+    to,
+    subject: `${ownerName} convidou você para uma pasta no Arquivapp`,
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827; max-width: 640px; margin: 0 auto; padding: 24px;">
+        <h2>Você recebeu um convite no Arquivapp</h2>
+
+        <p>
+          <strong>${ownerName}</strong> compartilhou a pasta
+          <strong> ${folderName}</strong> com você.
+        </p>
+
+        <p>
+          Para acessar a pasta, clique no botão abaixo e crie sua conta ou entre no Arquivapp.
+        </p>
+
+        <p style="margin: 24px 0;">
+          <a
+            href="${inviteUrl}"
+            style="display: inline-block; background: #2563eb; color: white; padding: 12px 18px; text-decoration: none; border-radius: 8px; font-weight: 700;"
+          >
+            Aceitar convite
+          </a>
+        </p>
+
+        <p>Se você não esperava este convite, pode ignorar este email.</p>
+      </div>
+    `,
+  });
+
+  if (error) {
+    console.error("Erro ao enviar email de convite com link:", error);
+    throw new Error("Erro ao enviar convite com link");
+  }
+}
+
+type SendEmailVerificationParams = {
+  to: string;
+  userName?: string | null;
+  verificationUrl: string;
+};
+
+export async function sendEmailVerification({
+  to,
+  userName,
+  verificationUrl,
+}: SendEmailVerificationParams) {
+  const from = getDefaultFromEmail();
+  const resend = getResendClient();
+
+  const greeting = userName?.trim() ? `Olá, ${userName}!` : "Olá!";
+
+  const { error } = await resend.emails.send({
+    from,
+    to,
+    subject: "Confirme seu cadastro no Arquivapp",
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827; max-width: 640px; margin: 0 auto; padding: 24px;">
+        <h2>${greeting}</h2>
+
+        <p>
+          Seu cadastro no <strong>Arquivapp</strong> foi criado com sucesso.
+        </p>
+
+        <p>
+          Para ativar sua conta, confirme seu e-mail clicando no botão abaixo:
+        </p>
+
+        <p style="margin: 24px 0;">
+          <a
+            href="${verificationUrl}"
+            style="display: inline-block; background: #2563eb; color: white; padding: 12px 18px; text-decoration: none; border-radius: 8px; font-weight: 700;"
+          >
+            Confirmar e-mail
+          </a>
+        </p>
+
+        <p>
+          Se você não fez esse cadastro, pode ignorar esta mensagem.
+        </p>
+      </div>
+    `,
+  });
+
+  if (error) {
+    console.error("Erro ao enviar email de verificação:", error);
+    throw new Error("Erro ao enviar email de verificação");
+  }
+}

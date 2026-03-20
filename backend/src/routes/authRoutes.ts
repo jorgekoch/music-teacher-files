@@ -3,6 +3,7 @@ import {
   forgotPassword,
   login,
   resetPassword,
+  verifyEmailController
 } from "../controllers/authController";
 import { validateBody } from "../middlewares/validateSchemaMiddleware";
 import {
@@ -13,6 +14,7 @@ import {
 
 const router = Router();
 
+router.get("/verify-email/:token", verifyEmailController);
 router.post("/login", validateBody(loginSchema), login);
 router.post(
   "/forgot-password",
@@ -24,5 +26,6 @@ router.post(
   validateBody(resetPasswordSchema),
   resetPassword
 );
+
 
 export default router;

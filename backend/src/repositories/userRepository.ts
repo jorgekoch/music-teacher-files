@@ -24,16 +24,6 @@ export function findUserByStripeSubscriptionId(stripeSubscriptionId: string) {
   });
 }
 
-export function createUser(email: string, password: string, name: string) {
-  return prisma.user.create({
-    data: {
-      email,
-      password,
-      name,
-    },
-  });
-}
-
 export function updateUserProfile(
   id: number,
   data: { name?: string; avatarUrl?: string | null }
@@ -97,6 +87,55 @@ export function clearResetPasswordToken(userId: number) {
     data: {
       resetPasswordToken: null,
       resetPasswordExpiresAt: null,
+    },
+  });
+}
+
+export function createUser(
+  email: string,
+  password: string,
+  name: string
+) {
+  return prisma.user.create({
+    data: {
+      email,
+      password,
+      name,
+      emailVerified: false,
+    },
+  });
+}
+
+export function setEmailVerificationToken(
+  userId: number,
+  token: string,
+  expiresAt: Date
+) {
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      emailVerificationToken: token,
+      emailVerificationExpiresAt: expiresAt,
+      emailVerified: false,
+    },
+  });
+}
+
+export function findUserByEmailVerificationToken(token: string) {
+  return prisma.user.findFirst({
+    where: {
+      emailVerificationToken: token,
+    },
+  });
+}
+
+export function confirmUserEmail(userId: number) {
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      emailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpiresAt: null,
     },
   });
 }

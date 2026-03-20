@@ -4,6 +4,9 @@ import {
   forgotPasswordService,
   resetPasswordService,
 } from "../services/passwordResetService";
+import { verifyEmailService } from "../services/emailVerificationService";
+
+
 
 export async function login(
   req: Request,
@@ -53,6 +56,19 @@ export async function resetPassword(
     res.send({
       message: "Senha redefinida com sucesso.",
     });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function verifyEmailController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { token } = req.params;
+
+    await verifyEmailService(token);
+
+    // Redireciona pro frontend (melhor UX)
+    res.redirect(`${process.env.FRONTEND_URL}/email-confirmed`);
   } catch (error) {
     next(error);
   }

@@ -11,6 +11,7 @@ import sharedFileRoutes from "./sharedFileRoutes";
 import dashboardRoutes from "./dashboardRoutes";
 import billingRouter from "./billingRoutes";
 import folderShareRoutes from "./folderShareRoutes";
+import emailVerificationRoutes from "./emailVerificationRoutes"
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use("/shared", sharedFileRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/billing", billingRouter);
 router.use("/folder-shares", folderShareRoutes);
+router.use("/email-verification", emailVerificationRoutes);
 
 export default router;

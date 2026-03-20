@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { findUserByEmail } from "../repositories/userRepository";
 import { AppError } from "../errors/AppError";
+import { acceptPendingFolderInvitesForUser } from "./folderShareService";
 
 export async function loginService(email: string, password: string) {
   const user = await findUserByEmail(email);
@@ -16,17 +17,21 @@ export async function loginService(email: string, password: string) {
     throw new AppError("Invalid credentials", 401);
   }
 
+  if (!user.emailVerified) {
+    throw new AppError("Confirme seu e-mail antes de entrar na conta", 403);
+  }
+
   const jwtSecret = process.env.JWT_SECRET;
 
   if (!jwtSecret) {
     throw new AppError("JWT_SECRET is not configured", 500);
   }
 
-  const token = jwt.sign(
-    { userId: user.id },
-    jwtSecret,
-    { expiresIn: "1d" }
-  );
+  await acceptPendingFolderInvitesForUser(user.id, user.email);
+
+  const token = jwt.sign({ userId: user.id }, jwtSecret, {
+    expiresIn: "1d",
+  });
 
   return {
     token,
