@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import axios from "axios";
@@ -11,35 +11,38 @@ export function ConfirmEmailPage() {
   const [success, setSuccess] = useState(false);
   const [message, setMessage] = useState("Confirmando seu e-mail...");
 
+  const hasSucceededRef = useRef(false);
+
   useEffect(() => {
+    let isMounted = true;
+
     async function confirmEmail() {
       if (!token) {
+        if (!isMounted) return;
         setLoading(false);
         setMessage("Token de confirmação inválido.");
         return;
       }
 
-      const requestKey = `Arquivapp:emailConfirmation:${token}`;
-      const alreadyRequested = sessionStorage.getItem(requestKey);
-
-      if (alreadyRequested) {
-        setLoading(false);
-        setSuccess(true);
-        setMessage("Seu e-mail já foi confirmado nesta sessão.");
-        return;
-      }
-
       try {
-        sessionStorage.setItem(requestKey, "true");
-
         await axios.get(
           `${import.meta.env.VITE_API_URL}/email-verification/${token}`
         );
 
+        if (!isMounted) return;
+
+        hasSucceededRef.current = true;
         setSuccess(true);
         setMessage("Seu e-mail foi confirmado com sucesso.");
       } catch (error: any) {
-        sessionStorage.removeItem(requestKey);
+        if (!isMounted) return;
+
+        // Se já houve sucesso antes, ignora qualquer erro posterior
+        if (hasSucceededRef.current) {
+          setSuccess(true);
+          setMessage("Seu e-mail foi confirmado com sucesso.");
+          return;
+        }
 
         setSuccess(false);
         setMessage(
@@ -47,11 +50,17 @@ export function ConfirmEmailPage() {
             "Não foi possível confirmar seu e-mail."
         );
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
 
     confirmEmail();
+
+    return () => {
+      isMounted = false;
+    };
   }, [token]);
 
   return (
